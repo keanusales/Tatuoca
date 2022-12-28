@@ -139,5 +139,7 @@ if __name__ == "__main__":
   output = xFilter(canny)
   saveImage(f"{name}.filter.png", output)
   saida = extract(output, name)
+  output = sobrepor(output, saida)
+  saveImage(f"{name}.sobre1.png", output, 0)
   output = sobrepor(canny, saida)
-  saveImage(f"{name}.sobre.png", output, 0)
+  saveImage(f"{name}.sobre2.png", output, 0)
