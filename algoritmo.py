@@ -111,6 +111,7 @@ def extract(entrie: cv.Mat, fname: str, radius = 5):
   for i in range(3):
     imagem = preta.copy()
     with open(f"{fname}{i}.txt", "w") as saida:
+      saida.write(f"Tam. img.: {entrie.shape}\n")
       for tupla in listas[i]:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
