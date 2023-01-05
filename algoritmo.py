@@ -1,10 +1,11 @@
 import cv2 as cv
 from numpy import full, uint8
 from itertools import product
-from os.path import isfile
-from os import system
+from os.path import isfile, isdir
+from os import system, mkdir
 
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
+ListsTuple = list[list[tuple[int, int]]]
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -14,7 +15,7 @@ def gray2bgr(entrie: cv.Mat):
 
 def openImage(entrie: str, convert = True):
   if not isfile(entrie):
-    print(f"\"{entrie}\" inexistente!"); exit(0)
+    print(f"\"{entrie}\" inexistente!"); exit()
   temp = cv.imread(entrie)
   return bgr2gray(temp) if convert else temp
 
@@ -63,34 +64,13 @@ def xFilter(entrie: cv.Mat, length = 10):
   for x, y in tuplas: xFilter(x, y)
   return output
 
-def organizeData(entrie: list, dist = 10, tam = 30):
-  templist1 = []
-  for sublista in entrie:
-    temp = [sublista[0]]
-    for tupla in sublista[1:]:
-      if tupla[1] == temp[-1][1]:
-        del temp[-1]
-      temp.append(tupla)
-    templist1.append(temp)
-  templist2 = []
-  for sublista in templist1:
-    temp = [sublista[0]]
-    for tupla in sublista[1:]:
-      y1 = tupla[1]
-      y2 = temp[-1][1]
-      if (y1 - y2) > dist and len(temp) < tam:
-        temp.clear()
-      temp.append(tupla)
-    templist2.append(temp)
-  return templist2
-
-def extract(entrie: cv.Mat, fname: str, radius = 5):
+def extract(entrie: cv.Mat, dname: str, radius = 5):
   tuplas = getTuplas(entrie.shape)
   tuplas = [x for x in tuplas if entrie[x] == WHITE]
   tuplas = sorted(tuplas)
-  with open(f"{fname}.tup.txt", "w") as saida:
+  with open(f"{dname}/tup.txt", "w") as saida:
     for tupla in tuplas: saida.write(f"{tupla}\n")
-  listas: list[list[tuple[int, int]]] = []
+  listas: ListsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
     temp = [tuplas[pos1]]
@@ -110,14 +90,44 @@ def extract(entrie: cv.Mat, fname: str, radius = 5):
   sobre = gray2bgr(entrie)
   for i in range(3):
     imagem = preta.copy()
-    with open(f"{fname}{i}.txt", "w") as saida:
+    with open(f"{dname}/{i}.txt", "w") as saida:
       saida.write(f"Tam. img.: {entrie.shape}\n")
       for tupla in listas[i]:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
         sobre[tupla] = RED
-    saveImage(f"{fname}{i}.png", imagem)
+    saveImage(f"{dname}/{i}.png", imagem)
   return sobre
+
+def organizeData(entrie: ListsTuple, d = 10, t = 100):
+  templist1: ListsTuple = []
+  for sublista in entrie:
+    temp = [sublista[0]]
+    for tupla in sublista[1:]:
+      if tupla[1] == temp[-1][1]:
+        del temp[-1]
+      temp.append(tupla)
+    templist1.append(temp)
+  templist2: ListsTuple = []
+  for sublista in templist1:
+    temp = [sublista[0]]
+    for tupla in sublista[1:]:
+      e1 = tupla[1]
+      e2 = temp[-1][1]
+      if (e1 - e2) > d and len(temp) < t:
+        temp.clear()
+      temp.append(tupla)
+    templist2.append(temp)
+  templist3: ListsTuple = []
+  for sublista in templist2:
+    temp = [sublista[0]]
+    for tupla in sublista[1:]:
+      e1 = tupla[0]
+      e2 = temp[-1][0]
+      if -d <= (e1 - e2) <= d:
+        temp.append(tupla)
+    templist3.append(temp)
+  return templist3
 
 def sobrepor(canny: cv.Mat, aux: cv.Mat):
   convert = gray2bgr(canny)
@@ -129,18 +139,19 @@ def sobrepor(canny: cv.Mat, aux: cv.Mat):
 if __name__ == "__main__":
   system("cls||clear")
   entrie = input("Entrie archive: ")
-  opened = openImage(entrie)
+  output = openImage(entrie)
   name = entrie[:entrie.index(".")]
-  output = claheFilter(opened)
-  saveImage(f"{name}.clahe.png", output)
+  if not isdir(name): mkdir(name)
+  output = claheFilter(output)
+  saveImage(f"{name}/clahe.png", output)
   output = bilateral(output)
-  saveImage(f"{name}.bilat.png", output)
+  saveImage(f"{name}/bilat.png", output)
   canny = cannyFilter(output)
-  saveImage(f"{name}.canny.png", canny)
+  saveImage(f"{name}/canny.png", canny)
   output = xFilter(canny)
-  saveImage(f"{name}.filter.png", output)
+  saveImage(f"{name}/filter.png", output)
   saida = extract(output, name)
   output = sobrepor(output, saida)
-  saveImage(f"{name}.sobre1.png", output, 0)
+  saveImage(f"{name}/sobre1.png", output, 0)
   output = sobrepor(canny, saida)
-  saveImage(f"{name}.sobre2.png", output, 0)
+  saveImage(f"{name}/sobre2.png", output, 0)
