@@ -155,3 +155,4 @@ if __name__ == "__main__":
   saveImage(f"{name}/sobre1.png", output, 0)
   output = sobrepor(canny, saida)
   saveImage(f"{name}/sobre2.png", output, 0)
+  print("Processo Terminado!")
