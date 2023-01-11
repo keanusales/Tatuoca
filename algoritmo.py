@@ -16,7 +16,7 @@ def gray2bgr(entrie: cv.Mat):
 def openImage(entrie: str, convert = True):
   if not isfile(entrie):
     print(f"\"{entrie}\" inexistente!"); exit()
-  temp = cv.imread(entrie)
+  temp = cv.resize(cv.imread(entrie), (2400, 920))
   return bgr2gray(temp) if convert else temp
 
 def saveImage(fname: str, entrie: cv.Mat, convert = True):
@@ -99,7 +99,7 @@ def extract(entrie: cv.Mat, dname: str, radius = 5):
     saveImage(f"{dname}/{i}.png", imagem)
   return sobre
 
-def organizeData(entrie: ListsTuple, d = 10, t = 100):
+def organizeData(entrie: ListsTuple, d = 15, t = 100):
   templist1: ListsTuple = []
   for sublista in entrie:
     temp = [sublista[0]]
