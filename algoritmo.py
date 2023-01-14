@@ -16,8 +16,11 @@ def gray2bgr(entrie: cv.Mat):
 def openImage(entrie: str, convert = True):
   if not isfile(entrie):
     print(f"\"{entrie}\" inexistente!"); exit()
-  temp = cv.resize(cv.imread(entrie), (2400, 920))
-  return bgr2gray(temp) if convert else temp
+  name = entrie[:entrie.index(".")]
+  temp = cv.imread(entrie)
+  cv.imwrite(f"{name}.png.png", temp)
+  temp = cv.resize(temp, (2380, 910))
+  return name, bgr2gray(temp) if convert else temp
 
 def saveImage(fname: str, entrie: cv.Mat, convert = True):
   temp = gray2bgr(entrie) if convert else entrie
@@ -99,7 +102,7 @@ def extract(entrie: cv.Mat, dname: str, radius = 5):
     saveImage(f"{dname}/{i}.png", imagem)
   return sobre
 
-def organizeData(entrie: ListsTuple, d = 15, t = 100):
+def organizeData(entrie: ListsTuple, d = 10, t = 100):
   templist1: ListsTuple = []
   for sublista in entrie:
     temp = [sublista[0]]
@@ -139,8 +142,7 @@ def sobrepor(canny: cv.Mat, aux: cv.Mat):
 if __name__ == "__main__":
   system("cls||clear")
   entrie = input("Entrie archive: ")
-  output = openImage(entrie)
-  name = entrie[:entrie.index(".")]
+  name, output = openImage(entrie)
   if not isdir(name): mkdir(name)
   output = claheFilter(output)
   saveImage(f"{name}/clahe.png", output)
