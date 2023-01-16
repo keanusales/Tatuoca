@@ -164,6 +164,14 @@ def sobelFilter(entrie: cv.Mat) -> cv.Mat:
   ysobel = cv.convertScaleAbs(ysobel)
   return cv.addWeighted(xsobel, .5, ysobel, .5, 0)
 
+def biggerContour(entrie: cv.Mat):
+  canny = cannyFilter(entrie)
+  contours, hierarchy = cv.findContours(canny, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+  with open("temp.txt", "w") as temp: temp.write(f"{contours}")
+  entrieCopy = gray2bgr(entrie)
+  cv.drawContours(entrieCopy, contours, -1, (0, 255, 0), 2)
+  return entrieCopy
+
 def binarize(entrie: cv.Mat, llevel: uint8 = 40):
   def binarize(entrie: uint8):
     if entrie < llevel: return WHITE
