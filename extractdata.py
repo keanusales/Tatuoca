@@ -1,7 +1,8 @@
 import cv2 as cv
+from os import mkdir
 from numpy import full, uint8
 from itertools import product
-from os.path import isfile
+from os.path import isfile, isdir
 from threading import Thread
 from sys import stderr
 
@@ -56,19 +57,21 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
   print("cannyFilter terminado!")
   return output
 
-def estimateBack(entrie: cv.Mat):
+def estimateBack(entrie: cv.Mat, proc = 1, est = 3):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, uint8)
   listemp: ListsTuple = []
   for x in range(1, entrie.shape[0] - 1):
-    temp = product((x-1, x, x+1), range(entrie.shape[1]))
+    temp = range(x - proc, x + proc + 1)
+    temp = product(temp, range(entrie.shape[1]))
     temp = [tupla for tupla in temp if entrie[tupla] == WHITE]
     listemp.append(temp)
   indexes: list[int] = []
   for x, temp in enumerate(listemp):
     if len(temp) > 1800:
-      indexes.extend(range(x-3, x+4))
-      deleted[x-3:x+3, :] = BLACK
+      x1, x2 = x - est, x + est
+      indexes.extend(range(x1, x2+1))
+      deleted[x1:x2, :] = BLACK
   for x in indexes:
     for elem in listemp[x]: estimated[elem] = WHITE
   print("estimateBack terminado!")
@@ -127,17 +130,29 @@ def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
   listas = [elem for elem in listas if len(elem) > 500]
   preta = full(entrie.shape, BLACK, uint8)
   sobre = gray2bgr(entrie)
+  if not isdir(f"{dname}/img"): mkdir(f"{dname}/img")
   for i, sublista in enumerate(listas):
     imagem = preta.copy()
-    with open(f"{dname}/{x}{i}.txt", "w") as saida:
-      saida.write(f"Tam. img.: {entrie.shape}\n")
+    with open(f"{dname}/img/{x}{i}.txt", "w") as saida:
+      saida.write(f"Tam.: {entrie.shape}\n")
       for tupla in sublista:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
         sobre[tupla] = RED
-    cv.imwrite(f"{dname}/{x}{i}.png", imagem)
+    cv.imwrite(f"{dname}/img/{x}{i}.png", imagem)
   print("extract terminado!")
-  return sobre
+  return sobre, listas
+
+def writeArch(dname: str, entrie1: ListsTuple, entrie2: ListsTuple):
+  if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
+  for i, sublist1 in enumerate(entrie1):
+    for j, sublist2 in enumerate(entrie2):
+      with open(f"{dname}/list/{i}{j}.txt", "w") as saida:
+        for elem1, elem2 in product(sublist1, sublist2):
+          if elem1[1] == elem2[1]:
+            dist = abs(elem1[0] - elem2[0])
+            saida.write(f"{elem1}{elem2} - {dist}\n")
+  print("writeArch terminado!")
 
 def organizeData(entrie: ListsTuple, d = 5, t = 30):
   listemp1: ListsTuple = []
@@ -199,5 +214,3 @@ class rThread(Thread):
   def join(self, *args, **kwargs):
     super().join(*args, **kwargs)
     return self._result
-
-if __name__ == "__main__": pass
