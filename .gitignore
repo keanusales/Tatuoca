@@ -1,4 +1,6 @@
 # Documentos
+*.c
+*.html
 *.pdf
 *.docx
 *.zip

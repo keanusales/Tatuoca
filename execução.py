@@ -1,6 +1,5 @@
 from extractdata import *
-from os.path import isdir
-from os import system, mkdir
+from os import system
 
 system("cls||clear")
 name, output = openImage(input("Entrie archive: "))
@@ -25,8 +24,8 @@ cv.imwrite(f"{name}/juntos.png", output)
 thread1 = rThread(target = extract, args = [deleted, name, 1])
 thread2 = rThread(target = extract, args = [estimat, name, 2])
 thread1.start(); thread2.start()
-return1, return2 = thread1.join(), thread2.join()
-imagem, lista1 = return1; lista2 = return2[1]
+imagem, lista1 = thread1.join()
+lista2 = thread2.join()[1]
 writeArch(name, lista1, lista2)
 thread1 = rThread(target = sobrepor, args = [output, imagem])
 thread2 = rThread(target = sobrepor, args = [canny, imagem])

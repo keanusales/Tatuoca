@@ -1,8 +1,8 @@
 import cv2 as cv
 from os import mkdir
+from os.path import isfile, isdir
 from numpy import full, uint8
 from itertools import product
-from os.path import isfile, isdir
 from threading import Thread
 from sys import stderr
 
