@@ -47,11 +47,6 @@ def claheFilter(entrie: cv.Mat):
   print("claheFilter terminado!")
   return output
 
-def bilateral(entrie: cv.Mat, key = 7) -> cv.Mat:
-  output = cv.bilateralFilter(entrie, key, 75, 75)
-  print("bilateral terminado!")
-  return output
-
 def cannyFilter(entrie: cv.Mat) -> cv.Mat:
   output = cv.Canny(entrie, 200, 255, L2gradient = True)
   print("cannyFilter terminado!")
@@ -76,34 +71,6 @@ def estimateBack(entrie: cv.Mat, proc = 1, est = 3):
     for elem in listemp[x]: estimated[elem] = WHITE
   print("estimateBack terminado!")
   return deleted, estimated
-
-def xFilter(entrie: cv.Mat, length = 5):
-  output = entrie.copy()
-  def funcao1(pair1: int, pair2: int):
-    def funcao2(cord1: int, cord2: int):
-      pixel1 = output[cord1, pair2]
-      pixel2 = output[cord2, pair2]
-      if pixel1 == pixel2 == WHITE:
-        for x in range(cord1, cord2 + 1):
-          output[x, pair2] = BLACK
-        output[pair1, pair2] = WHITE
-        return True
-      return False
-    cord1 = pair1 - length
-    cord2 = pair1 + length
-    while cord1 != cord2:
-      if funcao2(cord1, cord2): break
-      cord1 += 1
-      if funcao2(cord1, cord2): break
-      cord1 -= 1; cord2 -= 1
-      if funcao2(cord1, cord2): break
-      cord1 += 1
-  altura, largura = output.shape
-  atr1, atr2 = length + 1, altura - length
-  tuplas = product(range(atr1, atr2), range(largura))
-  for x, y in tuplas: funcao1(x, y)
-  print("xFilter terminado!")
-  return output
 
 def xFilter2(entrie: cv.Mat, dist = 10):
   output = entrie.copy()
@@ -133,10 +100,7 @@ def xFilter2(entrie: cv.Mat, dist = 10):
 def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
   tuplas = getTupShape(entrie.shape)
   tuplas = [x for x in tuplas if entrie[x] == WHITE]
-  tuplas = sorted(tuplas)
-  with open(f"{dname}/tup.txt", "w") as saida:
-    for tupla in tuplas: saida.write(f"{tupla}\n")
-  listas: ListsTuple = []
+  tuplas = sorted(tuplas); listas: ListsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
     temp = [tuplas[pos1]]
@@ -168,7 +132,7 @@ def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
   print("extract terminado!")
   return sobre, listas
 
-def writeArch(dname: str, entrie1: ListsTuple, entrie2: ListsTuple):
+def calcDiff(dname: str, entrie1: ListsTuple, entrie2: ListsTuple):
   if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
   for i, sublist1 in enumerate(entrie1):
     for j, sublist2 in enumerate(entrie2):
@@ -177,7 +141,7 @@ def writeArch(dname: str, entrie1: ListsTuple, entrie2: ListsTuple):
           if elem1[1] == elem2[1]:
             dist = abs(elem1[0] - elem2[0])
             saida.write(f"{elem1}{elem2} - {dist}\n")
-  print("writeArch terminado!")
+  print("calcDiff terminado!")
 
 def organizeData(entrie: ListsTuple, d = 5, t = 30):
   listemp1: ListsTuple = []

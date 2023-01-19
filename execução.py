@@ -26,7 +26,7 @@ thread2 = rThread(target = extract, args = [estimat, name, 2])
 thread1.start(); thread2.start()
 imagem, lista1 = thread1.join()
 lista2 = thread2.join()[1]
-writeArch(name, lista1, lista2)
+calcDiff(name, lista1, lista2)
 thread1 = rThread(target = sobrepor, args = [output, imagem])
 thread2 = rThread(target = sobrepor, args = [canny, imagem])
 thread1.start(); thread2.start()

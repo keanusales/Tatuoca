@@ -157,6 +157,34 @@ def boxBlur(entrie: Image.Image, radius = 3):
   FILTER = ImageFilter.BoxBlur(radius)
   return entrie.filter(FILTER)
 
+def xFilter(entrie: cv.Mat, length = 5):
+  output = entrie.copy()
+  def funcao1(pair1: int, pair2: int):
+    def funcao2(cord1: int, cord2: int):
+      pixel1 = output[cord1, pair2]
+      pixel2 = output[cord2, pair2]
+      if pixel1 == pixel2 == WHITE:
+        for x in range(cord1, cord2 + 1):
+          output[x, pair2] = BLACK
+        output[pair1, pair2] = WHITE
+        return True
+      return False
+    cord1 = pair1 - length
+    cord2 = pair1 + length
+    while cord1 != cord2:
+      if funcao2(cord1, cord2): break
+      cord1 += 1
+      if funcao2(cord1, cord2): break
+      cord1 -= 1; cord2 -= 1
+      if funcao2(cord1, cord2): break
+      cord1 += 1
+  altura, largura = output.shape
+  atr1, atr2 = length + 1, altura - length
+  tuplas = product(range(atr1, atr2), range(largura))
+  for x, y in tuplas: funcao1(x, y)
+  print("xFilter terminado!")
+  return output
+
 def sobelFilter(entrie: cv.Mat) -> cv.Mat:
   xsobel = cv.Sobel(entrie, cv.CV_16S, 1, 0, ksize = 3, scale = 1)
   ysobel = cv.Sobel(entrie, cv.CV_16S, 0, 1, ksize = 3, scale = 1)
