@@ -53,7 +53,7 @@ def bilateral(entrie: cv.Mat, key = 7) -> cv.Mat:
   return output
 
 def cannyFilter(entrie: cv.Mat) -> cv.Mat:
-  output = cv.Canny(entrie, 220, 255, L2gradient = True)
+  output = cv.Canny(entrie, 200, 255, L2gradient = True)
   print("cannyFilter terminado!")
   return output
 
@@ -103,6 +103,31 @@ def xFilter(entrie: cv.Mat, length = 5):
   tuplas = product(range(atr1, atr2), range(largura))
   for x, y in tuplas: funcao1(x, y)
   print("xFilter terminado!")
+  return output
+
+def xFilter2(entrie: cv.Mat, dist = 10):
+  output = entrie.copy()
+  def xFilter2(pos1: int):
+    pos2 = pos1 + dist
+    for x in range(pos2, pos1, -1):
+      if output[x, y] == WHITE:
+        for l in range(pos1, x + 1):
+          output[l, y] = BLACK
+        temp = (pos1 + x)//2
+        output[temp, y] = WHITE
+        break
+    return pos2
+  lentrie = output.shape[0] - dist
+  for y in range(output.shape[1]):
+    pos1, flag = 0, True
+    while flag:
+      flag = False
+      for x in range(pos1, lentrie):
+        if output[x, y] == WHITE:
+          flag = True
+          pos1 = xFilter2(x)
+          break
+  print("xFilter2 terminado!")
   return output
 
 def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
