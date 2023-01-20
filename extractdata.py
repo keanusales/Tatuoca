@@ -7,7 +7,8 @@ from threading import Thread
 from sys import stderr
 
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
-ListsTuple = list[list[tuple[int, int]]]
+LisTuple = list[tuple[int, int]]
+LisLisTuple = list[LisTuple]
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -33,12 +34,9 @@ def cutImage(entrie: cv.Mat):
   y1 = int(largura * 0.044)
   y2 = int(largura * 0.964)
   cutted = cutted[x1:x2, y1:y2]
-  cutted = cv.resize(cutted, (2380, 910))
+  cutted = cv.resize(cutted, (4760, 1820))
   print("cutImage terminado!")
   return cutted
-
-def getTupShape(entrie: cv.Mat.shape):
-  return product(range(entrie[0]), range(entrie[1]))
 
 def claheFilter(entrie: cv.Mat):
   a, b, c = cv.split(gray2bgr(entrie))
@@ -52,55 +50,86 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
   print("cannyFilter terminado!")
   return output
 
-def estimateBack(entrie: cv.Mat, proc = 1, est = 3):
+def estimateBack(entrie: cv.Mat, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, uint8)
-  listemp: ListsTuple = []
-  for x in range(1, entrie.shape[0] - 1):
-    temp = range(x - proc, x + proc + 1)
-    temp = product(temp, range(entrie.shape[1]))
-    temp = [tupla for tupla in temp if entrie[tupla] == WHITE]
-    listemp.append(temp)
+  listmp: LisLisTuple = []
+  for x in range(entrie.shape[0]):
+    temp = product([x], range(entrie.shape[1]))
+    temp = [a for a in temp if entrie[a] == WHITE]
+    listmp.append(temp)
   indexes: list[int] = []
-  for x, temp in enumerate(listemp):
-    if len(temp) > 1800:
-      x1, x2 = x - est, x + est
-      indexes.extend(range(x1, x2+1))
-      deleted[x1:x2, :] = BLACK
+  atual, lentmp = 0, len(listmp)
+  while True:
+    meio = lentmp
+    for i in range(atual, lentmp):
+      if len(listmp[i]) > 1200:
+        meio = i; break
+    if meio == lentmp: break
+    raio = meio - proc
+    for i in range(raio, meio):
+      e1 = len(listmp[i])
+      e2 = len(listmp[i+1])
+      if (e2 - e1) > 100:
+        pos1 = i; break
+    raio = meio + proc
+    for i in range(raio, meio, -1):
+      e1 = len(listmp[i])
+      e2 = len(listmp[i-1])
+      if (e2 - e1) > 100:
+        pos2 = i; break
+    deleted[pos1:pos2, :] = BLACK
+    pos2 += 1; atual = raio
+    indexes.extend(range(pos1, pos2))
   for x in indexes:
-    for elem in listemp[x]: estimated[elem] = WHITE
+    for elem in listmp[x]:
+      estimated[elem] = WHITE
   print("estimateBack terminado!")
   return deleted, estimated
 
-def xFilter2(entrie: cv.Mat, dist = 10):
+def xFilter2(entrie: cv.Mat, dist = 20):
   output = entrie.copy()
-  def xFilter2(pos1: int):
-    pos2 = pos1 + dist
-    for x in range(pos2, pos1, -1):
-      if output[x, y] == WHITE:
-        for l in range(pos1, x + 1):
-          output[l, y] = BLACK
-        temp = (pos1 + x)//2
-        output[temp, y] = WHITE
-        break
-    return pos2
   lentrie = output.shape[0] - dist
-  for y in range(output.shape[1]):
+  def xFilter2(y: int):
     pos1, flag = 0, True
-    while flag:
+    while True:
       flag = False
       for x in range(pos1, lentrie):
         if output[x, y] == WHITE:
-          flag = True
-          pos1 = xFilter2(x)
+          pos1, flag = x, True
           break
+      if not flag: return
+      pos2 = pos1 + dist
+      for x in range(pos2, pos1, -1):
+        if output[x, y] == WHITE:
+          pos2 = x + 1
+          for l in range(pos1, pos2):
+            output[l, y] = BLACK
+          temp = (pos1 + x)//2
+          output[temp, y] = WHITE
+          break
+      pos1 = pos2
+  colunas = range(output.shape[1])
+  for y in colunas: xFilter2(y)
   print("xFilter2 terminado!")
   return output
 
-def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
-  tuplas = getTupShape(entrie.shape)
-  tuplas = [x for x in tuplas if entrie[x] == WHITE]
-  tuplas = sorted(tuplas); listas: ListsTuple = []
+def extractPixels(entrie: cv.Mat):
+  altura, largura = entrie.shape
+  temp = product(range(altura), range(largura))
+  temp = sorted([x for x in temp if entrie[x] == WHITE])
+  print("extractPixels terminado!")
+  return temp
+
+def juntarImgs(entrie: cv.Mat, listas: LisTuple):
+  output = entrie.copy()
+  for tupla in listas: output[tupla] = WHITE
+  print("juntarImgs terminado!")
+  return output
+
+def organizePixels(tuplas: LisTuple, shape:
+        tuple[int, int], dname: str, x: int, radius = 10):
+  listas: LisLisTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
     temp = [tuplas[pos1]]
@@ -117,41 +146,28 @@ def extract(entrie: cv.Mat, dname: str, x: int, radius = 5):
   for elem in listas: elem.sort(key = lambda x: x[1])
   listas = organizeData(listas)
   listas = [elem for elem in listas if len(elem) > 500]
-  preta = full(entrie.shape, BLACK, uint8)
-  sobre = gray2bgr(entrie)
+  preta = full(shape, BLACK, uint8)
   if not isdir(f"{dname}/img"): mkdir(f"{dname}/img")
   for i, sublista in enumerate(listas):
     imagem = preta.copy()
     with open(f"{dname}/img/{x}{i}.txt", "w") as saida:
-      saida.write(f"Tam.: {entrie.shape}\n")
+      saida.write(f"Tam.: {shape}\n")
       for tupla in sublista:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
-        sobre[tupla] = RED
     cv.imwrite(f"{dname}/img/{x}{i}.png", imagem)
-  print("extract terminado!")
-  return sobre, listas
+  print("organizePixels terminado!")
+  return listas
 
-def calcDiff(dname: str, entrie1: ListsTuple, entrie2: ListsTuple):
-  if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
-  for i, sublist1 in enumerate(entrie1):
-    for j, sublist2 in enumerate(entrie2):
-      with open(f"{dname}/list/{i}{j}.txt", "w") as saida:
-        for elem1, elem2 in product(sublist1, sublist2):
-          if elem1[1] == elem2[1]:
-            dist = abs(elem1[0] - elem2[0])
-            saida.write(f"{elem1}{elem2} - {dist}\n")
-  print("calcDiff terminado!")
-
-def organizeData(entrie: ListsTuple, d = 5, t = 30):
-  listemp1: ListsTuple = []
+def organizeData(entrie: LisLisTuple, d = 10, t = 60):
+  listemp1: LisLisTuple = []
   for sublista in entrie:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
       if tupla[1] != temp[-1][1]:
         temp.append(tupla)
     listemp1.append(temp)
-  listemp2: ListsTuple = []
+  listemp2: LisLisTuple = []
   for sublista in listemp1:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
@@ -161,7 +177,7 @@ def organizeData(entrie: ListsTuple, d = 5, t = 30):
         temp.clear()
       temp.append(tupla)
     listemp2.append(temp)
-  listemp3: ListsTuple = []
+  listemp3: LisLisTuple = []
   for sublista in listemp2:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
@@ -172,18 +188,21 @@ def organizeData(entrie: ListsTuple, d = 5, t = 30):
     listemp3.append(temp)
   return listemp3
 
-def juntarImgs(entrie: cv.Mat, aux: cv.Mat):
-  output = entrie.copy()
-  for tupla in getTupShape(entrie.shape):
-    if aux[tupla] == WHITE:
-      output[tupla] = WHITE
-  print("juntarImgs terminado!")
-  return output
+def calcDiff(dname: str, entrie1: LisLisTuple, entrie2: LisLisTuple):
+  if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
+  for i, sublist1 in enumerate(entrie1):
+    for j, sublist2 in enumerate(entrie2):
+      with open(f"{dname}/list/{i}{j}.txt", "w") as saida:
+        for elem1, elem2 in product(sublist1, sublist2):
+          if elem1[1] == elem2[1]:
+            dist = abs(elem1[0] - elem2[0])
+            saida.write(f"{elem1}{elem2} - {dist}\n")
+  print("calcDiff terminado!")
 
-def sobrepor(canny: cv.Mat, aux: cv.Mat):
+def sobrepor(canny: cv.Mat, listas: LisLisTuple):
   output = gray2bgr(canny)
-  for tupla in getTupShape(aux.shape):
-    if tuple(aux[tupla]) == RED:
+  for sublista in listas:
+    for tupla in sublista:
       output[tupla] = RED
   print("sobrepor terminado!")
   return output
