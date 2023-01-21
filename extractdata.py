@@ -4,11 +4,24 @@ from os.path import isfile, isdir
 from numpy import full, uint8
 from itertools import product
 from threading import Thread
+from types import FunctionType
 from sys import stderr
 
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
-LisTuple = list[tuple[int, int]]
-LisLisTuple = list[LisTuple]
+tuple2int = tuple[int, int]
+listTuple = list[tuple2int]
+listsTuple = list[listTuple]
+
+class CountCalls:
+  def __init__(self, func: FunctionType):
+    self.__count, self.__func = 0, func
+
+  def __call__(self, *args, **kwargs):
+    self.__count += 1
+    return self.__func(*args, **kwargs)
+
+  @property
+  def call_count(self): return self.__count
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -53,7 +66,7 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
 def estimateBack(entrie: cv.Mat, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, uint8)
-  listmp: LisLisTuple = []
+  listmp: listsTuple = []
   for x in range(entrie.shape[0]):
     temp = product([x], range(entrie.shape[1]))
     temp = [a for a in temp if entrie[a] == WHITE]
@@ -121,15 +134,17 @@ def extractPixels(entrie: cv.Mat):
   print("extractPixels terminado!")
   return temp
 
-def juntarImgs(entrie: cv.Mat, listas: LisTuple):
+def juntarImgs(entrie: cv.Mat, listas: listTuple):
   output = entrie.copy()
   for tupla in listas: output[tupla] = WHITE
   print("juntarImgs terminado!")
   return output
 
-def organizePixels(tuplas: LisTuple, shape:
-        tuple[int, int], dname: str, x: int, radius = 10):
-  listas: LisLisTuple = []
+@CountCalls
+def organizePixels(tuplas: listTuple, shape: tuple2int, dname: str):
+  RADIUS, MINLEN = 10, 500
+  calls = organizePixels.call_count
+  listas: listsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
     temp = [tuplas[pos1]]
@@ -137,7 +152,7 @@ def organizePixels(tuplas: LisTuple, shape:
     for i in range(pos1, lentup):
       x1 = tuplas[i][0]
       x2 = temp[-1][0]
-      if (x1 - x2) > radius:
+      if (x1 - x2) > RADIUS:
         pos2 = i; break
       temp.append(tuplas[i])
     listas.append(temp)
@@ -145,50 +160,51 @@ def organizePixels(tuplas: LisTuple, shape:
   listas.sort(key = lambda x: len(x), reverse = True)
   for elem in listas: elem.sort(key = lambda x: x[1])
   listas = organizeData(listas)
-  listas = [elem for elem in listas if len(elem) > 500]
+  listas = [elem for elem in listas if len(elem) > MINLEN]
   preta = full(shape, BLACK, uint8)
   if not isdir(f"{dname}/img"): mkdir(f"{dname}/img")
   for i, sublista in enumerate(listas):
     imagem = preta.copy()
-    with open(f"{dname}/img/{x}{i}.txt", "w") as saida:
+    with open(f"{dname}/img/{calls}{i}.txt", "w") as saida:
       saida.write(f"Tam.: {shape}\n")
       for tupla in sublista:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
-    cv.imwrite(f"{dname}/img/{x}{i}.png", imagem)
+    cv.imwrite(f"{dname}/img/{calls}{i}.png", imagem)
   print("organizePixels terminado!")
   return listas
 
-def organizeData(entrie: LisLisTuple, d = 10, t = 60):
-  listemp1: LisLisTuple = []
+def organizeData(entrie: listsTuple):
+  DIST, TAM = 10, 60
+  listemp1: listsTuple = []
   for sublista in entrie:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
       if tupla[1] != temp[-1][1]:
         temp.append(tupla)
     listemp1.append(temp)
-  listemp2: LisLisTuple = []
+  listemp2: listsTuple = []
   for sublista in listemp1:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
       e1 = tupla[1]
       e2 = temp[-1][1]
-      if (e1 - e2) > d and len(temp) < t:
+      if (e1 - e2) > DIST and len(temp) < TAM:
         temp.clear()
       temp.append(tupla)
     listemp2.append(temp)
-  listemp3: LisLisTuple = []
+  listemp3: listsTuple = []
   for sublista in listemp2:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
       e1 = tupla[0]
       e2 = temp[-1][0]
-      if -d <= (e1 - e2) <= d:
+      if -DIST <= (e1 - e2) <= DIST:
         temp.append(tupla)
     listemp3.append(temp)
   return listemp3
 
-def calcDiff(dname: str, entrie1: LisLisTuple, entrie2: LisLisTuple):
+def calcDiff(dname: str, entrie1: listsTuple, entrie2: listsTuple):
   if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
   for i, sublist1 in enumerate(entrie1):
     for j, sublist2 in enumerate(entrie2):
@@ -199,7 +215,7 @@ def calcDiff(dname: str, entrie1: LisLisTuple, entrie2: LisLisTuple):
             saida.write(f"{elem1}{elem2} - {dist}\n")
   print("calcDiff terminado!")
 
-def sobrepor(canny: cv.Mat, listas: LisLisTuple):
+def sobrepor(canny: cv.Mat, listas: listsTuple):
   output = gray2bgr(canny)
   for sublista in listas:
     for tupla in sublista:
@@ -208,17 +224,17 @@ def sobrepor(canny: cv.Mat, listas: LisLisTuple):
   return output
 
 class rThread(Thread):
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+  def __init__(self, target = None, *args, **kwargs):
+    Thread.__init__(self, target = target, *args, **kwargs)
     self._result = None
-  
+
   def run(self):
     if self._target is None:
-      raise RuntimeError("Target não especificado!")
+      raise RuntimeError("target not specified!")
     try: self._result = self._target(*self._args, **self._kwargs)
     except Exception as exc:
       print(f"{type(exc).__name__}: {exc}", file = stderr)
-  
+
   def join(self, *args, **kwargs):
-    super().join(*args, **kwargs)
+    Thread.join(self, *args, **kwargs)
     return self._result

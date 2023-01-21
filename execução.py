@@ -25,10 +25,9 @@ thread1.start(); thread2.start()
 lista1, lista2 = thread1.join(), thread2.join()
 output = juntarImgs(estimat, lista1)
 cv.imwrite(f"{name}/juntos.png", output)
-thread1 = rThread(target = organizePixels,
-              args = [lista1, deleted.shape, name, 1])
-thread2 = rThread(target = organizePixels,
-              args = [lista2, estimat.shape, name, 2])
+shape1 = deleted.shape; shape2 = estimat.shape
+thread1 = rThread(target = organizePixels, args = [lista1, shape1, name])
+thread2 = rThread(target = organizePixels, args = [lista2, shape2, name])
 thread1.start(); thread2.start()
 lista1, lista2 = thread1.join(), thread2.join()
 calcDiff(name, lista1, lista2)
