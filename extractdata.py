@@ -1,7 +1,8 @@
 import cv2 as cv
 from os import mkdir
 from os.path import isfile, isdir
-from numpy import full, uint8
+from numpy import (full, uint8,
+  array, array_split as split)
 from itertools import product
 from threading import Thread
 from types import FunctionType
@@ -100,39 +101,52 @@ def estimateBack(entrie: cv.Mat, proc = 15):
   print("estimateBack terminado!")
   return deleted, estimated
 
-def xFilter2(entrie: cv.Mat, dist = 20):
+def xFilter2(entrie: cv.Mat, dist = 20, qThreads = 2):
   output = entrie.copy()
   lentrie = output.shape[0] - dist
-  def xFilter2(y: int):
-    pos1, flag = 0, True
-    while True:
-      flag = False
-      for x in range(pos1, lentrie):
-        if output[x, y] == WHITE:
-          pos1, flag = x, True
-          break
-      if not flag: return
-      pos2 = pos1 + dist
-      for x in range(pos2, pos1, -1):
-        if output[x, y] == WHITE:
-          pos2 = x + 1
-          for l in range(pos1, pos2):
-            output[l, y] = BLACK
-          temp = (pos1 + x)//2
-          output[temp, y] = WHITE
-          break
-      pos1 = pos2
-  colunas = range(output.shape[1])
-  for y in colunas: xFilter2(y)
+  def xFilter2(entrie: list[int]):
+    def xFilter2(y: int):
+      pos1, flag = 0, True
+      while True:
+        flag = False
+        for x in range(pos1, lentrie):
+          if output[x, y] == WHITE:
+            pos1, flag = x, True
+            break
+        if not flag: return
+        pos2 = pos1 + dist
+        for x in range(pos2, pos1, -1):
+          if output[x, y] == WHITE:
+            pos2 = x + 1
+            for l in range(pos1, pos2):
+              output[l, y] = BLACK
+            temp = (pos1 + x)//2
+            output[temp, y] = WHITE
+            break
+        pos1 = pos2
+    for y in entrie: xFilter2(y)
+  colunas = output.shape[1]
+  colunas = split(array(range(colunas)), qThreads)
+  threads = [Thread(target = xFilter2, args = [elem])
+    for elem in [list(elem) for elem in colunas]]
+  for thread in threads: thread.start()
+  for thread in threads: thread.join()
   print("xFilter2 terminado!")
   return output
 
-def extractPixels(entrie: cv.Mat):
-  altura, largura = entrie.shape
-  temp = product(range(altura), range(largura))
-  temp = sorted([x for x in temp if entrie[x] == WHITE])
+def extractPixels(entrie: cv.Mat, qThreads = 2):
+  altura = range(entrie.shape[0])
+  def extract(largura: list[int]):
+    temp = product(altura, largura)
+    return [x for x in temp if entrie[x] == WHITE]
+  largura = range(entrie.shape[1])
+  temp = split(array(largura), qThreads)
+  threads = [rThread(target = extract, args = [elem])
+    for elem in [list(elem) for elem in temp]]
+  for thread in threads: thread.start()
+  output = sorted([x for t in threads for x in t.join()])
   print("extractPixels terminado!")
-  return temp
+  return output
 
 def juntarImgs(entrie: cv.Mat, listas: listTuple):
   output = entrie.copy()
@@ -230,7 +244,7 @@ class rThread(Thread):
 
   def run(self):
     if self._target is None:
-      raise RuntimeError("target not specified!")
+      raise RuntimeError("target not specified")
     try: self._result = self._target(*self._args, **self._kwargs)
     except Exception as exc:
       print(f"{type(exc).__name__}: {exc}", file = stderr)
