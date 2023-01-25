@@ -1,5 +1,5 @@
 import cv2 as cv
-from os import mkdir
+from os import mkdir, system
 from os.path import isfile, isdir
 from numpy import (full, uint8,
   array, array_split as split)
@@ -134,7 +134,7 @@ def xFilter2(entrie: cv.Mat, dist = 20, qThreads = 2):
   print("xFilter2 terminado!")
   return output
 
-def extractPixels(entrie: cv.Mat, qThreads = 2):
+def extract(entrie: cv.Mat, qThreads = 2):
   altura = range(entrie.shape[0])
   def extract(largura: list[int]):
     temp = product(altura, largura)
@@ -144,20 +144,22 @@ def extractPixels(entrie: cv.Mat, qThreads = 2):
   threads = [rThread(target = extract, args = [elem])
     for elem in [list(elem) for elem in temp]]
   for thread in threads: thread.start()
-  output = sorted([x for t in threads for x in t.join()])
-  print("extractPixels terminado!")
+  output = [x for t in threads for x in t.join()]
+  output = sorted(output)
+  print("extract terminado!")
   return output
 
-def juntarImgs(entrie: cv.Mat, listas: listTuple):
-  output = entrie.copy()
-  for tupla in listas: output[tupla] = WHITE
+def juntarImgs(shape: tuple2int, listas: listsTuple):
+  output = full(shape, BLACK, uint8)
+  temp = [elem for sub in listas for elem in sub]
+  for tupla in temp: output[tupla] = WHITE
   print("juntarImgs terminado!")
   return output
 
 @CountCalls
-def organizePixels(tuplas: listTuple, shape: tuple2int, dname: str):
+def organize(tuplas: listTuple, shape: tuple2int, dname: str):
   RADIUS, MINLEN = 10, 500
-  calls = organizePixels.call_count
+  calls = organize.call_count
   listas: listsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
@@ -173,7 +175,7 @@ def organizePixels(tuplas: listTuple, shape: tuple2int, dname: str):
     pos1 = pos2
   listas.sort(key = lambda x: len(x), reverse = True)
   for elem in listas: elem.sort(key = lambda x: x[1])
-  listas = organizeData(listas)
+  listas = suborganize(listas)
   listas = [elem for elem in listas if len(elem) > MINLEN]
   preta = full(shape, BLACK, uint8)
   if not isdir(f"{dname}/img"): mkdir(f"{dname}/img")
@@ -185,10 +187,10 @@ def organizePixels(tuplas: listTuple, shape: tuple2int, dname: str):
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
     cv.imwrite(f"{dname}/img/{calls}{i}.png", imagem)
-  print("organizePixels terminado!")
+  print("organize terminado!")
   return listas
 
-def organizeData(entrie: listsTuple):
+def suborganize(entrie: listsTuple):
   DIST, TAM = 10, 60
   listemp1: listsTuple = []
   for sublista in entrie:
@@ -252,3 +254,55 @@ class rThread(Thread):
   def join(self, *args, **kwargs):
     Thread.join(self, *args, **kwargs)
     return self._result
+
+if __name__ == "__main__":
+  system("cls||clear")
+  name, output = openImage(input("Entrie archive: "))
+  if not isdir(name): mkdir(name)
+
+  output = cutImage(output)
+  cv.imwrite(f"{name}/cutted.png", output)
+  output = claheFilter(output)
+  cv.imwrite(f"{name}/clahe.png", output)
+  canny = cannyFilter(output)
+  shape: tuple2int = canny.shape
+  cv.imwrite(f"{name}/canny.png", canny)
+
+  deleted, estimat = estimateBack(canny)
+  cv.imwrite(f"{name}/estimat.png", estimat)
+  cv.imwrite(f"{name}/deleted.png", deleted)
+
+  thread1 = rThread(target = xFilter2, args = [deleted])
+  thread2 = rThread(target = xFilter2, args = [estimat])
+  thread1.start(); thread2.start()
+  deleted, estimat = thread1.join(), thread2.join()
+  cv.imwrite(f"{name}/filter1.png", deleted)
+  cv.imwrite(f"{name}/filter2.png", estimat)
+
+  thread1 = rThread(target = extract, args = [deleted])
+  thread2 = rThread(target = extract, args = [estimat])
+  thread1.start(); thread2.start()
+  lista1, lista2 = thread1.join(), thread2.join()
+
+  output = juntarImgs(shape, [lista1, lista2])
+  cv.imwrite(f"{name}/juntos.png", output)
+
+  args1 = [lista1, shape, name]
+  args2 = [lista2, shape, name]
+  thread1 = rThread(target = organize, args = args1)
+  thread2 = rThread(target = organize, args = args2)
+  thread1.start(); thread2.start()
+  lista1, lista2 = thread1.join(), thread2.join()
+
+  calcDiff(name, lista1, lista2)
+
+  args1 = [output, lista1]
+  args2 = [canny, lista1]
+  thread1 = rThread(target = sobrepor, args = args1)
+  thread2 = rThread(target = sobrepor, args = args2)
+  thread1.start(); thread2.start()
+  saida1, saida2 = thread1.join(), thread2.join()
+  cv.imwrite(f"{name}/sobre1.png", saida1)
+  cv.imwrite(f"{name}/sobre2.png", saida2)
+
+  print("Processo Terminado!")
