@@ -104,8 +104,8 @@ def estimateBack(entrie: cv.Mat, proc = 15):
 def xFilter2(entrie: cv.Mat, dist = 20, qThreads = 2):
   output = entrie.copy()
   lentrie = output.shape[0] - dist
-  def xFilter2(entrie: list[int]):
-    def xFilter2(y: int):
+  def subPart1(entrie: list[int]):
+    def subPart2(y: int):
       pos1, flag = 0, True
       while True:
         flag = False
@@ -124,10 +124,10 @@ def xFilter2(entrie: cv.Mat, dist = 20, qThreads = 2):
             output[temp, y] = WHITE
             break
         pos1 = pos2
-    for y in entrie: xFilter2(y)
+    for y in entrie: subPart2(y)
   colunas = output.shape[1]
   colunas = split(array(range(colunas)), qThreads)
-  threads = [Thread(target = xFilter2, args = [elem])
+  threads = [Thread(target = subPart1, args = [elem])
     for elem in [list(elem) for elem in colunas]]
   for thread in threads: thread.start()
   for thread in threads: thread.join()
@@ -136,12 +136,12 @@ def xFilter2(entrie: cv.Mat, dist = 20, qThreads = 2):
 
 def extract(entrie: cv.Mat, qThreads = 2):
   altura = range(entrie.shape[0])
-  def extract(largura: list[int]):
+  def subPart(largura: list[int]):
     temp = product(altura, largura)
     return [x for x in temp if entrie[x] == WHITE]
   largura = range(entrie.shape[1])
   temp = split(array(largura), qThreads)
-  threads = [rThread(target = extract, args = [elem])
+  threads = [rThread(target = subPart, args = [elem])
     for elem in [list(elem) for elem in temp]]
   for thread in threads: thread.start()
   output = [x for t in threads for x in t.join()]
