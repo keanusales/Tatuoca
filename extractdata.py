@@ -14,15 +14,18 @@ listTuple = list[tuple2int]
 listsTuple = list[listTuple]
 
 class CountCalls:
+  _list = ["curve", "base"]
+
   def __init__(self, func: FunctionType):
-    self.__count, self.__func = 0, func
+    self._count, self._func = -1, func
 
   def __call__(self, *args, **kwargs):
-    self.__count += 1
-    return self.__func(*args, **kwargs)
+    self._count += 1
+    return self._func(*args, **kwargs)
 
   @property
-  def call_count(self): return self.__count
+  def get_dtype(self):
+    return self._list[self._count]
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -159,7 +162,7 @@ def juntarImgs(shape: tuple2int, listas: listsTuple):
 @CountCalls
 def organize(tuplas: listTuple, shape: tuple2int, dname: str):
   RADIUS, MINLEN = 10, 500
-  calls = organize.call_count
+  dtype = organize.get_dtype
   listas: listsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
@@ -178,15 +181,16 @@ def organize(tuplas: listTuple, shape: tuple2int, dname: str):
   listas = suborganize(listas)
   listas = [elem for elem in listas if len(elem) > MINLEN]
   preta = full(shape, BLACK, uint8)
-  if not isdir(f"{dname}/img"): mkdir(f"{dname}/img")
+  pasta = f"{dname}/processImg"
+  if not isdir(pasta): mkdir(pasta)
   for i, sublista in enumerate(listas):
     imagem = preta.copy()
-    with open(f"{dname}/img/{calls}{i}.txt", "w") as saida:
+    with open(f"{pasta}/{dtype}{i}.txt", "w") as saida:
       saida.write(f"Tam.: {shape}\n")
       for tupla in sublista:
         saida.write(f"{tupla}\n")
         imagem[tupla] = WHITE
-    cv.imwrite(f"{dname}/img/{calls}{i}.png", imagem)
+    cv.imwrite(f"{pasta}/{dtype}{i}.png", imagem)
   print("organize terminado!")
   return listas
 
@@ -220,11 +224,12 @@ def suborganize(entrie: listsTuple):
     listemp3.append(temp)
   return listemp3
 
-def calcDiff(dname: str, entrie1: listsTuple, entrie2: listsTuple):
-  if not isdir(f"{dname}/list"): mkdir(f"{dname}/list")
-  for i, sublist1 in enumerate(entrie1):
-    for j, sublist2 in enumerate(entrie2):
-      with open(f"{dname}/list/{i}{j}.txt", "w") as saida:
+def calcDiff(dname: str, curves: listsTuple, basels: listsTuple):
+  pasta = f"{dname}/calculoDiff"
+  if not isdir(pasta): mkdir(pasta)
+  for i, sublist1 in enumerate(curves):
+    for j, sublist2 in enumerate(basels):
+      with open(f"{pasta}/curve{i}base{j}.txt", "w") as saida:
         for elem1, elem2 in product(sublist1, sublist2):
           if elem1[1] == elem2[1]:
             dist = abs(elem1[0] - elem2[0])
