@@ -14,8 +14,6 @@ listTuple = list[tuple2int]
 listsTuple = list[listTuple]
 
 class CountCalls:
-  _list = ["curve", "base"]
-
   def __init__(self, func: FunctionType):
     self._count, self._func = -1, func
 
@@ -24,8 +22,7 @@ class CountCalls:
     return self._func(*args, **kwargs)
 
   @property
-  def get_dtype(self):
-    return self._list[self._count]
+  def count_calls(self): return self._count
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -162,7 +159,8 @@ def juntarImgs(shape: tuple2int, listas: listsTuple):
 @CountCalls
 def organize(tuplas: listTuple, shape: tuple2int, dname: str):
   RADIUS, MINLEN = 10, 500
-  dtype = organize.get_dtype
+  calls = organize.count_calls
+  dtype = ["curve", "base"][calls]
   listas: listsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
