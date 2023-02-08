@@ -198,29 +198,21 @@ def suborganize(entrie: listsTuple):
   for sublista in entrie:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
-      if tupla[1] != temp[-1][1]:
+      res1 = tupla[0] - temp[-1][0]
+      res2 = tupla[1] != temp[-1][1]
+      if -DIST <= res1 <= DIST and res2:
         temp.append(tupla)
     listemp1.append(temp)
   listemp2: listsTuple = []
   for sublista in listemp1:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
-      e1 = tupla[1]
-      e2 = temp[-1][1]
-      if (e1 - e2) > DIST and len(temp) < TAM:
+      res1 = tupla[1] - temp[-1][1]
+      if res1 > DIST and len(temp) < TAM:
         temp.clear()
       temp.append(tupla)
     listemp2.append(temp)
-  listemp3: listsTuple = []
-  for sublista in listemp2:
-    temp = [sublista[0]]
-    for tupla in sublista[1:]:
-      e1 = tupla[0]
-      e2 = temp[-1][0]
-      if -DIST <= (e1 - e2) <= DIST:
-        temp.append(tupla)
-    listemp3.append(temp)
-  return listemp3
+  return listemp2
 
 def calcDiff(dname: str, curves: listsTuple, basels: listsTuple):
   pasta = f"{dname}/calculoDiff"
