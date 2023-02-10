@@ -5,24 +5,12 @@ from numpy import (full, uint8,
   array, array_split as split)
 from itertools import product
 from threading import Thread
-from types import FunctionType
 from sys import stderr
 
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
 tuple2int = tuple[int, int]
 listTuple = list[tuple2int]
 listsTuple = list[listTuple]
-
-class CountCalls:
-  def __init__(self, func: FunctionType):
-    self._count, self._func = -1, func
-
-  def __call__(self, *args, **kwargs):
-    self._count += 1
-    return self._func(*args, **kwargs)
-
-  @property
-  def count_calls(self): return self._count
 
 def bgr2gray(entrie: cv.Mat):
   return cv.cvtColor(entrie, cv.COLOR_BGR2GRAY)
@@ -40,13 +28,20 @@ def openImage(entrie: str):
     cv.imwrite(f"{name}/{name}.png", temp)
   return name, bgr2gray(temp)
 
-def cutImage(entrie: cv.Mat):
+def cutImage(entrie: cv.Mat, fator = 10):
   cutted = entrie.copy()
-  altura, largura = entrie.shape
-  x1 = int(altura * 0.075)
-  x2 = int(altura * 0.908)
-  y1 = int(largura * 0.044)
-  y2 = int(largura * 0.964)
+  altr, larg = entrie.shape
+  tamanho = (larg//fator, altr//fator)
+  res = cv.resize(cutted, tamanho)
+  res = cannyFilter(claheFilter(res))
+  res = estimateBack(res, 380, 10)[1]
+  res = xFilter2(res, 10, 4)
+  res = organize(extract(res, 4), 5, 350)
+  res.sort(key = lambda x: x[0][0])
+  altr, larg = res[0][len(res[0])//2]
+  altr, larg = altr*fator, larg*fator
+  x1, x2 = (altr - 1240), (altr + 985)
+  y1, y2 = (larg - 2945), (larg + 2805)
   cutted = cutted[x1:x2, y1:y2]
   cutted = cv.resize(cutted, (4760, 1820))
   print("cutImage terminado!")
@@ -64,7 +59,7 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
   print("cannyFilter terminado!")
   return output
 
-def estimateBack(entrie: cv.Mat, proc = 15):
+def estimateBack(entrie: cv.Mat, tam = 1200, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, uint8)
   listmp: listsTuple = []
@@ -77,20 +72,20 @@ def estimateBack(entrie: cv.Mat, proc = 15):
   while True:
     meio = lentmp
     for i in range(atual, lentmp):
-      if len(listmp[i]) > 1200:
+      if len(listmp[i]) > tam:
         meio = i; break
     if meio == lentmp: break
     raio = meio - proc
     for i in range(raio, meio):
       e1 = len(listmp[i])
       e2 = len(listmp[i+1])
-      if (e2 - e1) > 100:
+      if (e2 - e1) > (tam//12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
       e1 = len(listmp[i])
       e2 = len(listmp[i-1])
-      if (e2 - e1) > 100:
+      if (e2 - e1) > (tam//12):
         pos2 = i; break
     deleted[pos1:pos2, :] = BLACK
     pos2 += 1; atual = raio
@@ -156,11 +151,7 @@ def juntarImgs(shape: tuple2int, listas: listsTuple):
   print("juntarImgs terminado!")
   return output
 
-@CountCalls
-def organize(tuplas: listTuple, shape: tuple2int, dname: str):
-  RADIUS, MINLEN = 10, 500
-  calls = organize.count_calls
-  dtype = ["curve", "base"][calls]
+def organize(tuplas: listTuple, radius = 10, minlen = 1000):
   listas: listsTuple = []
   pos1 = 0; lentup = len(tuplas)
   while pos1 != lentup:
@@ -169,7 +160,7 @@ def organize(tuplas: listTuple, shape: tuple2int, dname: str):
     for i in range(pos1, lentup):
       x1 = tuplas[i][0]
       x2 = temp[-1][0]
-      if (x1 - x2) > RADIUS:
+      if (x1 - x2) > radius:
         pos2 = i; break
       temp.append(tuplas[i])
     listas.append(temp)
@@ -177,18 +168,7 @@ def organize(tuplas: listTuple, shape: tuple2int, dname: str):
   listas.sort(key = lambda x: len(x), reverse = True)
   for elem in listas: elem.sort(key = lambda x: x[1])
   listas = suborganize(listas)
-  listas = [elem for elem in listas if len(elem) > MINLEN]
-  preta = full(shape, BLACK, uint8)
-  pasta = f"{dname}/processImg"
-  if not isdir(pasta): mkdir(pasta)
-  for i, sublista in enumerate(listas):
-    imagem = preta.copy()
-    with open(f"{pasta}/{dtype}{i}.txt", "w") as saida:
-      saida.write(f"Tam.: {shape}\n")
-      for tupla in sublista:
-        saida.write(f"{tupla}\n")
-        imagem[tupla] = WHITE
-    cv.imwrite(f"{pasta}/{dtype}{i}.png", imagem)
+  listas = [elem for elem in listas if len(elem) > minlen]
   print("organize terminado!")
   return listas
 
@@ -213,6 +193,24 @@ def suborganize(entrie: listsTuple):
       temp.append(tupla)
     listemp2.append(temp)
   return listemp2
+
+contcalls = 0
+def saveLists(listas: listsTuple, shape: tuple2int, dname: str):
+  global contcalls
+  dtype = ["curve", "base"][contcalls]
+  contcalls += 1
+  preta = full(shape, BLACK, uint8)
+  pasta = f"{dname}/processImg"
+  if not isdir(pasta): mkdir(pasta)
+  for i, sublista in enumerate(listas):
+    imagem = preta.copy()
+    with open(f"{pasta}/{dtype}{i}.txt", "w") as saida:
+      saida.write(f"Tam.: {shape}\n")
+      for tupla in sublista:
+        saida.write(f"{tupla}\n")
+        imagem[tupla] = WHITE
+    cv.imwrite(f"{pasta}/{dtype}{i}.png", imagem)
+  print("saveLists terminado!")
 
 def calcDiff(dname: str, curves: listsTuple, basels: listsTuple):
   pasta = f"{dname}/calculoDiff"
@@ -282,12 +280,17 @@ if __name__ == "__main__":
   output = juntarImgs(shape, [lista1, lista2])
   cv.imwrite(f"{name}/juntos.png", output)
 
-  args1 = [lista1, shape, name]
-  args2 = [lista2, shape, name]
-  thread1 = rThread(target = organize, args = args1)
-  thread2 = rThread(target = organize, args = args2)
+  thread1 = rThread(target = organize, args = [lista1])
+  thread2 = rThread(target = organize, args = [lista2])
   thread1.start(); thread2.start()
   lista1, lista2 = thread1.join(), thread2.join()
+
+  args1 = [lista1, shape, name]
+  args2 = [lista2, shape, name]
+  thread1 = Thread(target = saveLists, args = args1)
+  thread2 = Thread(target = saveLists, args = args2)
+  thread1.start(); thread2.start()
+  thread1.join(); thread2.join()
 
   calcDiff(name, lista1, lista2)
 
