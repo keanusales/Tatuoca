@@ -29,10 +29,9 @@ def openImage(entrie: str):
   return name, bgr2gray(temp)
 
 def cutImage(entrie: cv.Mat, fator = 10):
-  cutted = entrie.copy()
-  altr, larg = entrie.shape
-  tamanho = (larg//fator, altr//fator)
-  res = cv.resize(cutted, tamanho)
+  ALTR, LARG = entrie.shape
+  tamanho = (LARG//fator, ALTR//fator)
+  res = cv.resize(entrie, tamanho)
   res = cannyFilter(claheFilter(res))
   res = estimateBack(res, 380, 10)[1]
   res = xFilter2(res, 10, 4)
@@ -40,9 +39,11 @@ def cutImage(entrie: cv.Mat, fator = 10):
   res.sort(key = lambda x: x[0][0])
   altr, larg = res[0][len(res[0])//2]
   altr, larg = altr*fator, larg*fator
-  x1, x2 = (altr - 1240), (altr + 985)
-  y1, y2 = (larg - 2945), (larg + 2805)
-  cutted = cutted[x1:x2, y1:y2]
+  x1 = altr - round((124/267)*ALTR)
+  x2 = altr + round((197/534)*ALTR)
+  y1 = larg - round((589/1250)*LARG)
+  y2 = larg + round((561/1250)*LARG)
+  cutted = entrie[x1:x2, y1:y2]
   cutted = cv.resize(cutted, (4760, 1820))
   print("cutImage terminado!")
   return cutted
@@ -59,7 +60,7 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
   print("cannyFilter terminado!")
   return output
 
-def estimateBack(entrie: cv.Mat, tam = 1200, proc = 15):
+def estimateBack(entrie: cv.Mat, quant = 1200, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, uint8)
   listmp: listsTuple = []
@@ -72,20 +73,20 @@ def estimateBack(entrie: cv.Mat, tam = 1200, proc = 15):
   while True:
     meio = lentmp
     for i in range(atual, lentmp):
-      if len(listmp[i]) > tam:
+      if len(listmp[i]) > quant:
         meio = i; break
     if meio == lentmp: break
     raio = meio - proc
     for i in range(raio, meio):
       e1 = len(listmp[i])
       e2 = len(listmp[i+1])
-      if (e2 - e1) > (tam//12):
+      if (e2 - e1) > (quant//12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
       e1 = len(listmp[i])
       e2 = len(listmp[i-1])
-      if (e2 - e1) > (tam//12):
+      if (e2 - e1) > (quant//12):
         pos2 = i; break
     deleted[pos1:pos2, :] = BLACK
     pos2 += 1; atual = raio
