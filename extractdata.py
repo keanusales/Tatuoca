@@ -49,7 +49,7 @@ def cutImage(entrie: cv.Mat, fator = 10):
 
 def gaussThresh(entrie: cv.Mat) -> cv.Mat:
   output = cv.adaptiveThreshold(entrie, 255,
-    cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 17, 10)
+    cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 19, 10)
   output = cv.GaussianBlur(output, (11, 11), 0)
   print("gaussThresh terminado!")
   return output
