@@ -62,34 +62,33 @@ def cannyFilter(entrie: cv.Mat) -> cv.Mat:
 def estimateBack(entrie: cv.Mat, quant = 1200, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, "u1")
-  listmp = [[(i1, i2) for i2, elem in enumerate(arr) if elem]
+  lista = [[(i1, i2) for i2, elem in enumerate(arr) if elem]
             for i1, arr in enumerate(entrie == WHITE)]
-  indexes: list[int] = []
-  atual, lentmp = 0, len(listmp)
+  index: list[int] = []
+  atual, lentmp = 0, len(lista)
   while True:
     meio = lentmp
     for i in range(atual, lentmp):
-      if len(listmp[i]) > quant:
+      if len(lista[i]) > quant:
         meio = i; break
     if meio == lentmp: break
     raio = meio - proc
     for i in range(raio, meio):
-      e1 = len(listmp[i])
-      e2 = len(listmp[i+1])
+      e1 = len(lista[i])
+      e2 = len(lista[i+1])
       if (e2 - e1) > (quant//12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
-      e1 = len(listmp[i])
-      e2 = len(listmp[i-1])
+      e1 = len(lista[i])
+      e2 = len(lista[i-1])
       if (e2 - e1) > (quant//12):
         pos2 = i; break
     deleted[pos1:pos2, :] = BLACK
     pos2 += 1; atual = raio
-    indexes.extend(range(pos1, pos2))
-  for x in indexes:
-    for elem in listmp[x]:
-      estimated[elem] = WHITE
+    index.extend(range(pos1, pos2))
+  dim1, dim2 = zip(*(e for x in index for e in lista[x]))
+  estimated[dim1, dim2] = WHITE
   print("estimateBack terminado!")
   return deleted, estimated
 
