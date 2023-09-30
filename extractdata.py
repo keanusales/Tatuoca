@@ -49,7 +49,7 @@ def cutImage(entrie: Mat, fator = 10):
   y1 = larg - round((589/1250)*LARG)
   y2 = larg + round((561/1250)*LARG)
   cutted = entrie[x1:x2, y1:y2]
-  cutted = resize(cutted, (4760, 1820))
+  cutted = resize(cutted, shape[::-1])
   print("cutImage terminado!")
   return cutted
 
@@ -174,7 +174,7 @@ def organize(tuplas: listTuple, radius = 10, minlen = 1200):
         temp.append(tupla)
     list2.append(temp)
   listas = [elem for elem in list2 if len(elem) > minlen]
-  print("organize terminado!")
+  listas.sort(); print("organize terminado!")
   return listas
 
 def saveLists(listas: listsTuple, dtype: str, dname: str):
