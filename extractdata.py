@@ -1,10 +1,11 @@
 from numpy import full, ndenumerate
 from os.path import isfile, isdir
+from cv2.typing import MatLike
 from os import mkdir
 from cv2 import (
-  Mat, imread, imwrite,
-  cvtColor, adaptiveThreshold,
-  Canny, GaussianBlur, resize,
+  imread, imwrite, cvtColor,
+  adaptiveThreshold, Canny,
+  GaussianBlur, resize,
   ADAPTIVE_THRESH_GAUSSIAN_C,
   COLOR_BGR2GRAY,
   COLOR_GRAY2BGR,
@@ -17,10 +18,10 @@ listTuple = list[tuple2int]
 listsTuple = list[listTuple]
 shape = (1820, 4760)
 
-def bgr2gray(entrie: Mat):
+def bgr2gray(entrie: MatLike):
   return cvtColor(entrie, COLOR_BGR2GRAY)
 
-def gray2bgr(entrie: Mat):
+def gray2bgr(entrie: MatLike):
   return cvtColor(entrie, COLOR_GRAY2BGR)
 
 def imopen(entrie: str):
@@ -32,7 +33,7 @@ def imopen(entrie: str):
     imwrite(f"{name}/{name}.png", temp)
   return name, bgr2gray(temp)
 
-def cutImage(entrie: Mat, fator = 10):
+def cutImage(entrie: MatLike, fator = 10):
   ALTR, LARG = entrie.shape
   tamanho = (LARG//fator, ALTR//fator)
   res = resize(entrie, tamanho)
@@ -53,23 +54,23 @@ def cutImage(entrie: Mat, fator = 10):
   print("cutImage terminado!")
   return cutted
 
-def gaussThresh(entrie: Mat, size = 19, C = 10) -> Mat:
+def gaussThresh(entrie: MatLike, size = 19, C = 10):
   output = adaptiveThreshold(entrie, 255,
     ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, size, C)
   print("gaussThresh terminado!")
   return output
 
-def gaussBlur(entrie: Mat) -> Mat:
+def gaussBlur(entrie: MatLike):
   output = GaussianBlur(entrie, (11, 11), 0)
   print("gaussThresh terminado!")
   return output
 
-def cannyFilter(entrie: Mat) -> Mat:
+def cannyFilter(entrie: MatLike):
   output = Canny(entrie, 200, 255, L2gradient = True)
   print("cannyFilter terminado!")
   return output
 
-def estimateBack(entrie: Mat, quant = 1200, proc = 15):
+def estimateBack(entrie: MatLike, quant = 1200, proc = 15):
   deleted = entrie.copy()
   estimated = full(entrie.shape, BLACK, "u1")
   lista = [[(i1, i2) for i2, elem in enumerate(arr) if elem]
@@ -102,7 +103,7 @@ def estimateBack(entrie: Mat, quant = 1200, proc = 15):
   print("estimateBack terminado!")
   return deleted, estimated
 
-def xFilter2(entrie: Mat, dist = 20):
+def xFilter2(entrie: MatLike, dist = 20):
   output = entrie.copy()
   linhas, colunas = output.shape
   lentrie = linhas - dist
@@ -126,7 +127,7 @@ def xFilter2(entrie: Mat, dist = 20):
   print("xFilter2 terminado!")
   return output
 
-def extract(entrie: Mat):
+def extract(entrie: MatLike):
   elems = ndenumerate(entrie == WHITE)
   output = [idx for idx, elem in elems if elem]
   output.sort(); print("extract terminado!")
@@ -191,7 +192,7 @@ def saveLists(listas: listsTuple, dtype: str, dname: str):
     imwrite(f"{pasta}/{dtype}{i}.png", imagem)
   print("saveLists terminado!")
 
-def sobrepor(canny: Mat, listas: listsTuple):
+def sobrepor(canny: MatLike, listas: listsTuple):
   output = gray2bgr(canny)
   dim1, dim2 = zip(*(elem for sub in listas for elem in sub))
   output[dim1, dim2] = RED; print("sobrepor terminado!")
