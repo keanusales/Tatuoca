@@ -4,7 +4,7 @@ from os.path import isdir
 from os import mkdir
 
 alt = shape[0]
-h_pixel, d_pixel, z_pixel = (460/alt), (46/alt), (460/alt)
+h_pixel, d_pixel, z_pixel = (200/alt), (200/alt), (200/alt)
 variations = (h_pixel, d_pixel, z_pixel)
 
 def calcDiff(dname: str, curves: listsTuple, basels: listsTuple):
@@ -20,7 +20,7 @@ def calcDiff(dname: str, curves: listsTuple, basels: listsTuple):
         for i in range(pos2, len2):
           e3, e4 = el2 = sub2[i]
           if e2 == e4:
-            pos2, value = (i + 1), var*(e1 - e3)
+            pos2, value = (i + 1), var*(e3 - e1)
             saida.write(f"{el1}{el2} - {value}\n")
             break
   print("calcDiff terminado!")
