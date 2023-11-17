@@ -16,7 +16,7 @@ BLACK, WHITE, RED = 0, 255, (0, 0, 255)
 tuple2int = tuple[int, int]
 listTuple = list[tuple2int]
 listsTuple = list[listTuple]
-shape = (1820, 4760)
+shape = (1800, 4590)
 
 def bgr2gray(entrie: MatLike):
   return cvtColor(entrie, COLOR_BGR2GRAY)
