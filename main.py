@@ -2,8 +2,8 @@ from extract import (
   imopen, isdir, mkdir,
   imwrite, cutImage,
   gaussThresh, gaussBlur,
-  cannyFilter, estimateBack,
-  xFilter2, extract,
+  cannyFilter, separeLines,
+  skeletonize, extractWhites,
   juntarImgs, organize,
   saveLists, sobrepor
 )
@@ -22,15 +22,15 @@ imwrite(f"{name}/gauss.png", output)
 canny = cannyFilter(output)
 imwrite(f"{name}/canny.png", canny)
 
-deleted, estimat = estimateBack(canny)
+deleted, estimat = separeLines(canny)
 imwrite(f"{name}/estimat.png", estimat)
 imwrite(f"{name}/deleted.png", deleted)
 
-deleted, estimat = xFilter2(deleted), xFilter2(estimat)
+deleted, estimat = skeletonize(deleted), skeletonize(estimat)
 imwrite(f"{name}/filter1.png", deleted)
 imwrite(f"{name}/filter2.png", estimat)
 
-lista1, lista2 = extract(deleted), extract(estimat)
+lista1, lista2 = extractWhites(deleted), extractWhites(estimat)
 output = juntarImgs([lista1, lista2])
 imwrite(f"{name}/juntos.png", output)
 
