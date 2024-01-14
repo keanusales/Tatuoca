@@ -89,13 +89,13 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
     for i in range(raio, meio):
       e1 = whites[i]
       e2 = whites[i+1]
-      if (e2 - e1) > (quant//12):
+      if (e2 - e1) > (quant // 12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
       e1 = whites[i]
       e2 = whites[i-1]
-      if (e2 - e1) > (quant//12):
+      if (e2 - e1) > (quant // 12):
         pos2 = i; break
     background[pos1:pos2] = original_copy[pos1:pos2]
     original_copy[pos1:pos2], atual = BLACK, raio
