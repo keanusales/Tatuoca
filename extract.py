@@ -77,67 +77,64 @@ def extractWhites(entrie: MatLike):
 def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   original_copy = entrie.copy()
   background = full(entrie.shape, BLACK, "u1")
-  whites = [[(i1, i2) for i2, elem in enumerate(arr) if elem]
-             for i1, arr in enumerate(entrie == WHITE)]
-  lenwhites = [*map(len, whites)]
-  ref_lines: list[int] = []
+  whites = (entrie == WHITE).sum(axis = 1)
   atual, lentmp = 0, len(whites)
   while True:
     meio = lentmp
     for i in range(atual, lentmp):
-      if lenwhites[i] > quant:
+      if whites[i] > quant:
         meio = i; break
     if meio == lentmp: break
     raio = meio - proc
     for i in range(raio, meio):
-      e1 = lenwhites[i]
-      e2 = lenwhites[i+1]
+      e1 = whites[i]
+      e2 = whites[i+1]
       if (e2 - e1) > (quant//12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
-      e1 = lenwhites[i]
-      e2 = lenwhites[i-1]
+      e1 = whites[i]
+      e2 = whites[i-1]
       if (e2 - e1) > (quant//12):
         pos2 = i; break
-    original_copy[pos1:pos2, :] = BLACK
-    pos2 += 1; atual = raio
-    ref_lines.extend(range(pos1, pos2))
-  dim1, dim2 = zip(*(p for x in ref_lines for p in whites[x]))
-  background[dim1, dim2] = WHITE
+    background[pos1:pos2] = original_copy[pos1:pos2]
+    original_copy[pos1:pos2], atual = BLACK, raio
   print("estimateBack terminado!")
   return original_copy, background
 
 def skeletonize(entrie: MatLike, distance = 20):
   original_copy = entrie.copy()
-  linhas, colunas = original_copy.shape
-  lentrie = linhas - distance
-  for coluna in range(colunas):
-    pos1 = 0
+  transpose = original_copy.T
+  whites = extractWhites(transpose)
+  whites = groupby(whites, lambda x: x[0])
+  for key, listas in whites:
+    point1 = point2 = 0
+    listas = [*listas]
+    lenlistas = len(listas)
     while True:
-      white_detected = False
-      for linha1 in range(pos1, lentrie):
-        if original_copy[linha1, coluna] == WHITE:
-          pos1, white_detected = linha1, True
-          break
-      if not white_detected: break
-      pos2 = pos1 + distance
-      for linha2 in range(pos2, pos1, -1):
-        if original_copy[linha2, coluna] == WHITE:
-          pos2 = linha2 + 1
-          break
-      original_copy[pos1:pos2, coluna] = BLACK
-      mid_pos = (linha1 + linha2) // 2
-      original_copy[mid_pos, coluna] = WHITE
-      pos1 = pos2
-  print("xFilter2 terminado!")
+      (a, y0) = (a, y1) = listas[point1]
+      for pos in range(point1 + 1, lenlistas):
+        (a, ny), point2 = listas[pos], pos
+        if (ny - y0) > distance: break
+        (a, y1) = (a, ny)
+      if point1 == point2: break
+      transpose[key, y0:(y1 + 1)] = BLACK
+      midpoint = ((y0 + y1) // 2)
+      transpose[key, midpoint] = WHITE
+      point1 = point2
+  print("skeletonize terminado!")
   return original_copy
 
 def juntarImgs(listas: listsTuple):
   output = full(shape, BLACK, "u1")
-  dim1, dim2 = zip(*(elem for sub in listas for elem in sub))
-  output[dim1, dim2] = WHITE
+  output[*zip(*(e for s in listas for e in s))] = WHITE
   print("juntarImgs terminado!")
+  return output
+
+def sobrepor(canny: MatLike, listas: listsTuple):
+  output = gray2bgr(canny)
+  output[*zip(*(e for s in listas for e in s))] = RED
+  print("sobrepor terminado!")
   return output
 
 def organize(tuplas: listTuple, radius = 10, minlen = 1200):
@@ -192,9 +189,3 @@ def saveLists(listas: listsTuple, dtype: str, dname: str):
         imagem[tupla] = WHITE
     imwrite(f"{pasta}/{dtype}{i}.png", imagem)
   print("saveLists terminado!")
-
-def sobrepor(canny: MatLike, listas: listsTuple):
-  output = gray2bgr(canny)
-  dim1, dim2 = zip(*(elem for sub in listas for elem in sub))
-  output[dim1, dim2] = RED; print("sobrepor terminado!")
-  return output
