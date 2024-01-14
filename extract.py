@@ -28,7 +28,7 @@ def gray2bgr(entrie: MatLike):
 def imopen(entrie: str):
   if not isfile(entrie):
     exit(f"\"{entrie}\" inexistente!")
-  name, _ = entrie.split(".")
+  name, a = entrie.split(".")
   image = imread(entrie)
   return name, bgr2gray(image)
 
@@ -38,7 +38,7 @@ def cutImage(entrie: MatLike, fator = 10):
   res = resize(entrie, tamanho)
   res = gaussThresh(res, 9, 9)
   res = cannyFilter(res)
-  res = separeLines(res, 380, 10)[1]
+  a, res = separeLines(res, 380, 10)
   res = skeletonize(res, 10)
   res = organize(extractWhites(res), 5, 350)
   res.sort(key = lambda x: x[0][0])
