@@ -77,24 +77,24 @@ def extractWhites(entrie: MatLike):
 def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   original_copy = entrie.copy()
   background = full(entrie.shape, BLACK, "u1")
-  whites = (entrie == WHITE).sum(axis = 1)
-  atual, lentmp = 0, len(whites)
+  quants = (entrie == WHITE).sum(axis = 1)
+  atual, lenquants = 0, len(quants)
   while True:
-    meio = lentmp
-    for i in range(atual, lentmp):
-      if whites[i] > quant:
+    meio = lenquants
+    for i in range(atual, lenquants):
+      if quants[i] > quant:
         meio = i; break
-    if meio == lentmp: break
+    if meio == lenquants: break
     raio = meio - proc
     for i in range(raio, meio):
-      e1 = whites[i]
-      e2 = whites[i+1]
+      e1 = quants[i]
+      e2 = quants[i+1]
       if (e2 - e1) > (quant // 12):
         pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
-      e1 = whites[i]
-      e2 = whites[i-1]
+      e1 = quants[i]
+      e2 = quants[i-1]
       if (e2 - e1) > (quant // 12):
         pos2 = i; break
     background[pos1:pos2] = original_copy[pos1:pos2]
@@ -107,20 +107,20 @@ def skeletonize(entrie: MatLike, distance = 20):
   transpose = original_copy.T
   whites = extractWhites(transpose)
   whites = groupby(whites, lambda x: x[0])
-  for key, listas in whites:
+  for line, elems in whites:
     point1 = point2 = 0
-    listas = [*listas]
-    lenlistas = len(listas)
+    elems = [*elems]
+    lenelems = len(elems)
     while True:
-      (a, y0) = (a, y1) = listas[point1]
-      for pos in range(point1 + 1, lenlistas):
-        (a, ny), point2 = listas[pos], pos
+      (a, y0) = (a, y1) = elems[point1]
+      for pos in range(point1 + 1, lenelems):
+        (a, ny), point2 = elems[pos], pos
         if (ny - y0) > distance: break
         (a, y1) = (a, ny)
       if point1 == point2: break
-      transpose[key, y0:(y1 + 1)] = BLACK
+      transpose[line, y0:(y1 + 1)] = BLACK
       midpoint = ((y0 + y1) // 2)
-      transpose[key, midpoint] = WHITE
+      transpose[line, midpoint] = WHITE
       point1 = point2
   print("skeletonize terminado!")
   return original_copy
@@ -139,37 +139,34 @@ def sobrepor(canny: MatLike, listas: listsTuple):
 
 def organize(tuplas: listTuple, radius = 10, minlen = 1200):
   DIST, TAM = 10, 60
-  listas: listsTuple = []
-  pos1 = 0; lentup = len(tuplas)
+  elems1: listsTuple = []
+  pos1, lentup = 0, len(tuplas)
   while pos1 != lentup:
     temp = [tuplas[pos1]]
     pos1 += 1; pos2 = lentup
     for i in range(pos1, lentup):
-      x1 = tuplas[i][0]
-      x2 = temp[-1][0]
-      if (x1 - x2) > radius:
-        pos2 = i; break
+      (x1, a), (x2, a) = tuplas[i], temp[-1]
+      if (x1 - x2) > radius: pos2 = i; break
       temp.append(tuplas[i])
-    listas.append(temp)
+    elems1.append(temp)
     pos1 = pos2
-  listas.sort(key = lambda x: len(x), reverse = True)
-  for elem in listas: elem.sort(key = lambda x: x[1])
-  list1: listsTuple = []
-  for sublista in listas:
+  elems1.sort(key = lambda x: len(x), reverse = True)
+  for elem in elems1: elem.sort(key = lambda x: x[1])
+  elems2: listsTuple = []
+  for sublista in elems1:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
-      res1 = tupla[1] - temp[-1][1]
-      if res1 > DIST and len(temp) < TAM:
+      (a, r1), (a, r2) = tupla, temp[-1]
+      if (r1 - r2) > DIST and len(temp) < TAM:
         temp.clear()
       temp.append(tupla)
-    list1.append(temp)
+    elems2.append(temp)
   list2: listsTuple = []
-  for sublista in list1:
+  for sublista in elems2:
     temp = [sublista[0]]
     for tupla in sublista[1:]:
-      res1 = tupla[0] - temp[-1][0]
-      res2 = tupla[1] != temp[-1][1]
-      if abs(res1) <= DIST and res2:
+      (r1, r2), (r3, r4) = tupla, temp[-1]
+      if abs(r1 - r3) <= DIST and (r2 != r4):
         temp.append(tupla)
     list2.append(temp)
   listas = [elem for elem in list2 if len(elem) > minlen]
@@ -182,10 +179,9 @@ def saveLists(listas: listsTuple, dtype: str, dname: str):
   if not isdir(pasta): mkdir(pasta)
   for i, sublista in enumerate(listas):
     imagem = preta.copy()
+    imagem[*zip(*(elem for elem in sublista))] = WHITE
+    imwrite(f"{pasta}/{dtype}{i}.png", imagem)
     with open(f"{pasta}/{dtype}{i}.txt", "w") as saida:
       saida.write(f"Tam.: {shape}\n")
-      for tupla in sublista:
-        saida.write(f"{tupla}\n")
-        imagem[tupla] = WHITE
-    imwrite(f"{pasta}/{dtype}{i}.png", imagem)
+      for tupla in sublista: saida.write(f"{tupla}\n")
   print("saveLists terminado!")
