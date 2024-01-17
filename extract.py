@@ -78,25 +78,21 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   original_copy = entrie.copy()
   background = full(entrie.shape, BLACK, "u1")
   quants = (entrie == WHITE).sum(axis = 1)
+  diffs1 = (quants[1:] - quants[:-1]) > (quant // 12)
+  diffs2 = (quants[:-1] - quants[1:]) > (quant // 12)
+  quants = (quants > quant)
   atual, lenquants = 0, len(quants)
   while True:
     meio = lenquants
     for i in range(atual, lenquants):
-      if quants[i] > quant:
-        meio = i; break
+      if quants[i]: meio = i; break
     if meio == lenquants: break
     raio = meio - proc
     for i in range(raio, meio):
-      e1 = quants[i]
-      e2 = quants[i+1]
-      if (e2 - e1) > (quant // 12):
-        pos1 = i; break
+      if diffs1[i]: pos1 = i; break
     raio = meio + proc
     for i in range(raio, meio, -1):
-      e1 = quants[i]
-      e2 = quants[i-1]
-      if (e2 - e1) > (quant // 12):
-        pos2 = i; break
+      if diffs2[i-1]: pos2 = i; break
     background[pos1:pos2] = original_copy[pos1:pos2]
     original_copy[pos1:pos2], atual = BLACK, raio
   print("estimateBack terminado!")
@@ -108,10 +104,10 @@ def skeletonize(entrie: MatLike, distance = 20):
   whites = extractWhites(transpose)
   whites = groupby(whites, lambda x: x[0])
   for line, elems in whites:
-    point1 = point2 = 0
-    elems = [*elems]
+    point2, elems = 0, [*elems]
     lenelems = len(elems)
     while True:
+      point1 = point2
       (a, y0) = (a, y1) = elems[point1]
       for pos in range(point1 + 1, lenelems):
         (a, ny), point2 = elems[pos], pos
@@ -121,7 +117,6 @@ def skeletonize(entrie: MatLike, distance = 20):
       transpose[line, y0:(y1 + 1)] = BLACK
       midpoint = ((y0 + y1) // 2)
       transpose[line, midpoint] = WHITE
-      point1 = point2
   print("skeletonize terminado!")
   return original_copy
 
