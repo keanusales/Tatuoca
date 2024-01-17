@@ -69,11 +69,6 @@ def cannyFilter(entrie: MatLike):
   print("cannyFilter terminado!")
   return output
 
-def extractWhites(entrie: MatLike):
-  output = [*zip(*(entrie == WHITE).nonzero())]
-  print("extractWhites terminado!")
-  return output
-
 def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   original_copy = entrie.copy()
   background = full(entrie.shape, BLACK, "u1")
@@ -89,14 +84,19 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
     if meio == lenquants: break
     raio = meio - proc
     for i in range(raio, meio):
-      if diffs1[i]: pos1 = i; break
+      if diffs1[i]: pos1 = (i - 2); break
     raio = meio + proc
     for i in range(raio, meio, -1):
-      if diffs2[i-1]: pos2 = i; break
+      if diffs2[i-1]: pos2 = (i + 2); break
     background[pos1:pos2] = original_copy[pos1:pos2]
     original_copy[pos1:pos2], atual = BLACK, raio
   print("estimateBack terminado!")
   return original_copy, background
+
+def extractWhites(entrie: MatLike):
+  output = [*zip(*(entrie == WHITE).nonzero())]
+  print("extractWhites terminado!")
+  return output
 
 def skeletonize(entrie: MatLike, distance = 20):
   original_copy = entrie.copy()
