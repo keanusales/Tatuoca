@@ -76,9 +76,9 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   diffs1 = (quants[1:] - quants[:-1]) > (quant // 12)
   diffs2 = (quants[:-1] - quants[1:]) > (quant // 12)
   quants = (quants > quant)
-  atual, lenquants = 0, len(quants)
+  raio, lenquants = 0, len(quants)
   while True:
-    meio = lenquants
+    atual, meio = raio, lenquants
     for i in range(atual, lenquants):
       if quants[i]: meio = i; break
     if meio == lenquants: break
@@ -89,7 +89,7 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
     for i in range(raio, meio, -1):
       if diffs2[i-1]: pos2 = (i + 2); break
     background[pos1:pos2] = original_copy[pos1:pos2]
-    original_copy[pos1:pos2], atual = BLACK, raio
+    original_copy[pos1:pos2] = BLACK
   print("estimateBack terminado!")
   return original_copy, background
 
