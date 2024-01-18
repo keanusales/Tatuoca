@@ -75,19 +75,17 @@ def separeLines(entrie: MatLike, quant = 1200, proc = 15):
   quants = (entrie == WHITE).sum(axis = 1)
   diffs1 = (quants[1:] - quants[:-1]) > (quant // 12)
   diffs2 = (quants[:-1] - quants[1:]) > (quant // 12)
-  quants = (quants > quant)
-  raio, lenquants = 0, len(quants)
+  raio, quants = 0, (quants > quant)
   while True:
-    atual, meio = raio, lenquants
-    for i in range(atual, lenquants):
-      if quants[i]: meio = i; break
-    if meio == lenquants: break
+    [index] = quants[raio:].nonzero()
+    try: meio = (raio + index.min())
+    except ValueError: break
     raio = meio - proc
-    for i in range(raio, meio):
-      if diffs1[i]: pos1 = (i - 2); break
+    [index] = diffs1[raio:meio].nonzero()
+    pos1 = (raio + index.min() - 2)
     raio = meio + proc
-    for i in range(raio, meio, -1):
-      if diffs2[i-1]: pos2 = (i + 2); break
+    [index] = diffs2[meio:raio].nonzero()
+    pos2 = (meio + index.max() + 3)
     background[pos1:pos2] = original_copy[pos1:pos2]
     original_copy[pos1:pos2] = BLACK
   print("estimateBack terminado!")
