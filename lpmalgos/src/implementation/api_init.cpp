@@ -12,13 +12,31 @@
 namespace py = pybind11;
 using namespace py::literals;
 
+template <typename T>
+inline py::array_t<T> asarray(std::vector<T> &&entrie) {
+    using vector = std::vector<T>;
+    vector *ptr = new vector(std::move(entrie));
+    py::capsule capsule(ptr, [](void* foo) {
+        delete reinterpret_cast<vector*>(foo);
+    });
+    return py::array_t<T>(
+        (*ptr).size(), (*ptr).data(), capsule
+    );
+}
+
 void register_lpmalgos_module(py::module_ &m)
 {
     m.def("angular_distance", lpmalgos::angular_distance,
         "A"_a, "B"_a, "C"_a);
 
-    m.def("find_clusters", lpmalgos::find_clusters,
-        "locs"_a, "anisotropy"_a.noconvert(), "r_tol"_a,
+    m.def("find_clusters", [](const lpmalgos::Locations &locs,
+                              const lpmalgos::Ellipsoid &ani,
+                              double r_tol, double angular_tol,
+                              double support_threshold,
+                              int min_support_size){
+            return asarray(lpmalgos::find_clusters(locs, ani, r_tol,
+                angular_tol, support_threshold, min_support_size));
+        }, "locs"_a, "anisotropy"_a.noconvert(), "r_tol"_a,
         "angular_tol"_a, "support_threshold"_a, "min_support_size"_a);
 
     using lpmalgos::EllipsoidInfo;
@@ -97,11 +115,11 @@ void register_lpmalgos_module(py::module_ &m)
 
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &p, int max_size) {
-                return self.find_neighbors(p, max_size);
+                return asarray(self.find_neighbors(p, max_size));
             }, "point"_a, "max_size"_a)
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &p, double max_radius) {
-                return self.find_neighbors(p, max_radius);
+                return asarray(self.find_neighbors(p, max_radius));
             }, "point"_a, "max_radius"_a)
         .def("nearest_neighbor",
             [](Neighborhood &self, const lpmalgos::Location &p) {
