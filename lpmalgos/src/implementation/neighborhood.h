@@ -68,12 +68,12 @@ public:
     size_t size() const { return cloud.size(); }
 
 private:
-    using distance = nanoflann::L2_Simple_Adaptor<double, Point_cloud>;
-    using my_kd_tree_t =
-        nanoflann::KDTreeSingleIndexAdaptor<distance, Point_cloud, 3, size_t>;
+    using adaptor = nanoflann::L2_Simple_Adaptor<double, Point_cloud>;
+    using my_kd_tree_t = nanoflann::KDTreeSingleIndexAdaptor
+                                <adaptor, Point_cloud, 3, size_t>;
 
     Point_cloud cloud;
-    std::shared_ptr<my_kd_tree_t> kdtree;
+    std::unique_ptr<my_kd_tree_t> kdtree;
 
     bool use_anisotropy = false;
     Ellipsoid anisotropy;

@@ -83,10 +83,10 @@ void register_lpmalgos_module(py::module_ &m)
 
         .def("forward",
             [](Ellipsoid &self, const lpmalgos::Locations &locs) {
-                return self.forward(locs); }, "locs"_a)
+                return (self.forward(locs)); }, "locs"_a)
         .def("backward",
             [](Ellipsoid &self, const lpmalgos::Locations &locs) {
-                return self.backward(locs); }, "locs"_a)
+                return (self.backward(locs)); }, "locs"_a)
 
         .def("matrix", [](Ellipsoid &self) { return self.matrix(); })
         .def("inv_matrix", [](Ellipsoid &self) { return self.inv_matrix(); })

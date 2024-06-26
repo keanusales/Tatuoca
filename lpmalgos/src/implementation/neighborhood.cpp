@@ -19,7 +19,7 @@ Neighborhood::Neighborhood(size_t size, const location_function &loc)
 
     nanoflann::KDTreeSingleIndexAdaptorParams params;
     params.leaf_max_size = 10;
-    kdtree = std::make_shared<my_kd_tree_t>(3, cloud, params);
+    kdtree = std::make_unique<my_kd_tree_t>(3, cloud, params);
 }
 
 Neighborhood::Neighborhood(const Locations &locs,
@@ -57,12 +57,11 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
     }
 
     std::vector<size_t> neis(max_neighbors);
-    double *dists = new double[max_neighbors];
+    auto dists = std::make_unique<double>(max_neighbors);
     nanoflann::KNNResultSet<double> resultSet(max_neighbors);
-    resultSet.init(neis.data(), dists);
+    resultSet.init(neis.data(), dists.get());
     (*kdtree).findNeighbors(resultSet, &query_pt[0],
                             nanoflann::SearchParameters());
-    delete[] dists;
 
     return neis;
 }
