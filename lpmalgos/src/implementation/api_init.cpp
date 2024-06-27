@@ -7,21 +7,50 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
-#include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace py::literals;
 
+const int flags = py::array::c_style + py::array::forcecast;
+
+#pragma warning(disable: 4018)
+
+lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
+    const size_t size = lpmalgos::Location::SizeAtCompileTime;
+    if (entrie.ndim() != 2 || entrie.shape(1) != size) {
+        throw py::cast_error("Cannot convert the input ndarray!");
+    }
+    lpmalgos::Locations locs(entrie.shape(0));
+    auto ref = entrie.unchecked<2>();
+    for (size_t i = 0; i < entrie.shape(0); ++i) {
+        locs[i] = Eigen::Map<const lpmalgos::Location>(&ref(i, 0));
+    }
+    return locs;
+}
+
+#pragma warning(default: 4018)
+
+py::array_t<double, flags> asarray(lpmalgos::Locations &&entrie) {
+    const size_t size = lpmalgos::Location::SizeAtCompileTime;
+    py::array_t<double, flags> resp({entrie.size(), size});
+    auto ref = resp.mutable_unchecked<2>();
+    for (size_t i = 0; i < entrie.size(); ++i) {
+        Eigen::Map<lpmalgos::Location>(&ref(i, 0)) = entrie[i];
+    }
+    return resp;
+}
+
 template <typename T>
 inline py::array_t<T> asarray(std::vector<T> &&entrie) {
-    using vector = std::vector<T>;
-    vector *ptr = new vector(std::move(entrie));
-    py::capsule capsule(ptr, [](void* foo) {
-        delete reinterpret_cast<vector*>(foo);
+    T *data = entrie.data();
+    size_t size = entrie.size();
+    std::unique_ptr<std::vector<T>> ptr =
+        std::make_unique<std::vector<T>>(std::move(entrie));
+    py::capsule capsule(ptr.get(), [](void* foo) {
+        delete reinterpret_cast<std::vector<T>*>(foo);
     });
-    return py::array_t<T>(
-        (*ptr).size(), (*ptr).data(), capsule
-    );
+    ptr.release();
+    return py::array_t<T>(size, data, capsule);
 }
 
 void register_lpmalgos_module(py::module_ &m)
@@ -29,14 +58,14 @@ void register_lpmalgos_module(py::module_ &m)
     m.def("angular_distance", lpmalgos::angular_distance,
         "A"_a, "B"_a, "C"_a);
 
-    m.def("find_clusters", [](const lpmalgos::Locations &locs,
+    m.def("find_clusters", [](const py::array_t<int64_t, flags> &locs,
                               const lpmalgos::Ellipsoid &ani,
                               double r_tol, double angular_tol,
                               double support_threshold,
                               int min_support_size){
-            return asarray(lpmalgos::find_clusters(locs, ani, r_tol,
-                angular_tol, support_threshold, min_support_size));
-        }, "locs"_a, "anisotropy"_a.noconvert(), "r_tol"_a,
+            return asarray(lpmalgos::find_clusters(fromarray(locs), ani,
+                r_tol, angular_tol, support_threshold, min_support_size));
+        }, "locs"_a.noconvert(), "anisotropy"_a.noconvert(), "r_tol"_a,
         "angular_tol"_a, "support_threshold"_a, "min_support_size"_a);
 
     using lpmalgos::EllipsoidInfo;
@@ -63,12 +92,11 @@ void register_lpmalgos_module(py::module_ &m)
                 return new Ellipsoid(r1, r2, r3, azimuth, dip, rake);
              }), "r1"_a, "r2"_a, "r3"_a, "azimuth"_a, "dip"_a, "rake"_a)
 
-        .def(py::init<>([](Eigen::Vector3d length, Eigen::Vector3d rotton) {
-                return new Ellipsoid(length.x(), length.y(), length.z(),
-                                     rotton.x(), rotton.y(), rotton.z());
+        .def(py::init<>([](const Eigen::Vector3d l, const Eigen::Vector3d r) {
+                return new Ellipsoid(l.x(), l.y(), l.z(), r.x(), r.y(), r.z());
              }), "length"_a, "rotation"_a)
 
-        .def(py::init<>( [](const EllipsoidInfo &info) {
+        .def(py::init<>([](const EllipsoidInfo &info) {
                 return new Ellipsoid(info);
             }), "ellipsoid_info"_a.noconvert())
 
@@ -82,11 +110,13 @@ void register_lpmalgos_module(py::module_ &m)
                 return self.backward(p); }, "location"_a)
 
         .def("forward",
-            [](Ellipsoid &self, const lpmalgos::Locations &locs) {
-                return (self.forward(locs)); }, "locs"_a)
+            [](Ellipsoid &self, const py::array_t<int64_t, flags> &locs) {
+                return asarray(self.forward(fromarray(locs)));
+            }, "locs"_a.noconvert())
         .def("backward",
-            [](Ellipsoid &self, const lpmalgos::Locations &locs) {
-                return (self.backward(locs)); }, "locs"_a)
+            [](Ellipsoid &self, const py::array_t<int64_t, flags> &locs) {
+                return asarray(self.backward(fromarray(locs)));
+            }, "locs"_a.noconvert())
 
         .def("matrix", [](Ellipsoid &self) { return self.matrix(); })
         .def("inv_matrix", [](Ellipsoid &self) { return self.inv_matrix(); })
@@ -105,13 +135,13 @@ void register_lpmalgos_module(py::module_ &m)
     py::class_<Neighborhood> neighborhood(m, "Neighborhood", py::module_local());
 
     neighborhood
-        .def(py::init<>([](const lpmalgos::Locations &locs,
+        .def(py::init<>([](const py::array_t<int64_t, flags> &locs,
                            const Ellipsoid &ellipsoid) {
-                return new Neighborhood(locs, ellipsoid);
-             }), "locations"_a, "ellipsoid"_a.noconvert())
-        .def(py::init<>([](const lpmalgos::Locations &locs) {
-                return new Neighborhood(locs);
-             }), "locations"_a)
+                return new Neighborhood(fromarray(locs), ellipsoid);
+             }), "locations"_a.noconvert(), "ellipsoid"_a.noconvert())
+        .def(py::init<>([](const py::array_t<int64_t, flags> &locs) {
+                return new Neighborhood(fromarray(locs));
+             }), "locations"_a.noconvert())
 
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &p, int max_size) {

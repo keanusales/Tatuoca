@@ -2,6 +2,7 @@
 
 #include "nanoflann.hpp"
 #include "ellipsoid.h"
+#include <memory>
 
 namespace lpmalgos
 {

@@ -10,7 +10,7 @@ namespace lpmalgos
 
 using Matrix = Eigen::Matrix3d;
 using Location = Eigen::Vector3d;
-using Locations = std::vector<Eigen::Vector3d>;
+using Locations = std::vector<Location>;
 
 Matrix orthogonolize_axes(Matrix nei, bool sort = true);
 Matrix sort_matrix3d(Matrix m, bool orthogonalize = true);

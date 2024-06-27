@@ -209,7 +209,7 @@ Ellipsoid::Ellipsoid(double r1, double r2, double r3, double azimuth,
 }
 
 EllipsoidInfo Ellipsoid::info() const {
-    return extract_ellipsoid_info(sort_matrix3d(matrix()));
+    return extract_ellipsoid_info(matrix());
 }
 
 std::string Ellipsoid::to_string() const
