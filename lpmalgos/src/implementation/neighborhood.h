@@ -14,7 +14,7 @@ template <typename T> struct PointCloud {
         T x, y, z;
     };
 
-    using coord_t = T; //!< The type of each coordinate
+    using coord_t = T; // The type of each coordinate
 
     std::vector<Point> pts;
     size_t size() const { return pts.size(); }
@@ -50,17 +50,11 @@ template <typename T> struct PointCloud {
 class Neighborhood
 {
 public:
-    using Point_cloud = __private_nanoflann::PointCloud<double>;
-    using location_function = std::function<Location(size_t)>;
-
-    Neighborhood(size_t size, const location_function &loc);
-    Neighborhood(const Locations &locs);
     Neighborhood(const Locations &locs, const Ellipsoid &ani);
-    Neighborhood(const Neighborhood &other) = default;
+    Neighborhood(const Locations &locs);
 
     std::vector<size_t> find_neighbors(const Location &p,
                                        int max_neighbors) const;
-
     std::vector<size_t> find_neighbors(const Location &p,
                                        double max_radius) const;
 
@@ -69,9 +63,12 @@ public:
     size_t size() const { return cloud.size(); }
 
 private:
-    using adaptor = nanoflann::L2_Simple_Adaptor<double, Point_cloud>;
+    using Point_cloud = __private_nanoflann::PointCloud<double>;
+    using location_function = std::function<Location(size_t)>;
     using my_kd_tree_t = nanoflann::KDTreeSingleIndexAdaptor
-                                <adaptor, Point_cloud, 3, size_t>;
+        <nanoflann::L2_Simple_Adaptor<double, Point_cloud>, Point_cloud, 3, size_t>;
+
+    Neighborhood(size_t size, const location_function &loc);
 
     Point_cloud cloud;
     std::unique_ptr<my_kd_tree_t> kdtree;

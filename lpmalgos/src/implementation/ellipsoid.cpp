@@ -106,9 +106,9 @@ Matrix sort_matrix3d(Matrix m, bool orthogonalize)
     return m;
 }
 
-EllipsoidInfo extract_ellipsoid_info(const Matrix &_T)
+EllipsoidInfo extract_ellipsoid_info(const Matrix &other)
 {
-    Matrix T = sort_matrix3d(_T, true);
+    Matrix T = sort_matrix3d(other, true);
     EllipsoidInfo info;
 
     Location v1 = T.row(0);
@@ -160,23 +160,6 @@ EllipsoidInfo::EllipsoidInfo(double r1, double r2, double r3, double azimuth,
 {
 }
 
-Ellipsoid::Ellipsoid()
-{
-    trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-    inv_trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-}
-
-Ellipsoid::Ellipsoid(const EllipsoidInfo &info)
-    : Ellipsoid(info.r1, info.r2, info.r3, info.azimuth, info.dip, info.rake)
-{
-}
-
-Ellipsoid::Ellipsoid(const Matrix &T)
-{
-    trans_ = T;
-    inv_trans_ = T.inverse();
-}
-
 Ellipsoid::Ellipsoid(double r1, double r2, double r3, double azimuth,
                      double dip, double rake)
 {
@@ -206,6 +189,23 @@ Ellipsoid::Ellipsoid(double r1, double r2, double r3, double azimuth,
 
     trans_ = S * ((rx * ry) * rz);
     inv_trans_ = trans_.inverse();
+}
+
+Ellipsoid::Ellipsoid(const EllipsoidInfo &info)
+    : Ellipsoid(info.r1, info.r2, info.r3, info.azimuth, info.dip, info.rake)
+{
+}
+
+Ellipsoid::Ellipsoid(const Matrix &T)
+{
+    trans_ = T;
+    inv_trans_ = T.inverse();
+}
+
+Ellipsoid::Ellipsoid()
+{
+    trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+    inv_trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 }
 
 EllipsoidInfo Ellipsoid::info() const {

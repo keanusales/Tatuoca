@@ -22,17 +22,16 @@ struct EllipsoidInfo {
     EllipsoidInfo(double r1 = 0, double r2 = 0, double r3 = 0,
                   double azimuth = 0, double dip = 0, double rake = 0);
 };
-EllipsoidInfo extract_ellipsoid_info(const Matrix &T);
+EllipsoidInfo extract_ellipsoid_info(const Matrix &other);
 
 class Ellipsoid
 {
 public:
-    Ellipsoid();
     Ellipsoid(double r1, double r2, double r3,
               double azimuth, double dip, double rake);
-    Ellipsoid(const Matrix &T);
     Ellipsoid(const EllipsoidInfo &info);
-    Ellipsoid(const Ellipsoid &rhs) = default;
+    Ellipsoid(const Matrix &T);
+    Ellipsoid();
 
     inline Location forward(const Location &loc) const noexcept
     {
@@ -65,8 +64,8 @@ public:
         return result;
     }
 
-    inline const Matrix &matrix() const noexcept { return trans_; }
-    inline const Matrix &inv_matrix() const noexcept { return inv_trans_; }
+    inline Matrix matrix() const noexcept { return trans_; }
+    inline Matrix inv_matrix() const noexcept { return inv_trans_; }
 
     inline Location major_axis() const noexcept
     {

@@ -21,9 +21,9 @@ lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
         throw py::cast_error("Cannot convert the input ndarray!");
     }
     lpmalgos::Locations locs(entrie.shape(0));
-    auto ref = entrie.unchecked<2>();
+    auto view = entrie.unchecked<2>();
     for (size_t i = 0; i < entrie.shape(0); ++i) {
-        locs[i] = Eigen::Map<const lpmalgos::Location>(&ref(i, 0));
+        locs[i] = Eigen::Map<const lpmalgos::Location>(&view(i, 0));
     }
     return locs;
 }
@@ -33,9 +33,9 @@ lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
 py::array_t<double, flags> asarray(lpmalgos::Locations &&entrie) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
     py::array_t<double, flags> resp({entrie.size(), size});
-    auto ref = resp.mutable_unchecked<2>();
+    auto view = resp.mutable_unchecked<2>();
     for (size_t i = 0; i < entrie.size(); ++i) {
-        Eigen::Map<lpmalgos::Location>(&ref(i, 0)) = entrie[i];
+        Eigen::Map<lpmalgos::Location>(&view(i, 0)) = entrie[i];
     }
     return resp;
 }
@@ -83,24 +83,17 @@ void register_lpmalgos_module(py::module_ &m)
     py::class_<Ellipsoid> ellipsoid(m, "Ellipsoid", py::module_local());
 
     ellipsoid
-        .def(py::init<>([](const lpmalgos::Matrix &transpose) {
-                return new Ellipsoid(transpose);
-             }), "transpose"_a)
-
-        .def(py::init<>([](double r1, double r2, double r3,
-                           double azimuth, double dip, double rake) {
+        .def(py::init([](double r1, double r2, double r3,
+                         double azimuth, double dip, double rake) {
                 return new Ellipsoid(r1, r2, r3, azimuth, dip, rake);
              }), "r1"_a, "r2"_a, "r3"_a, "azimuth"_a, "dip"_a, "rake"_a)
-
-        .def(py::init<>([](const Eigen::Vector3d l, const Eigen::Vector3d r) {
-                return new Ellipsoid(l.x(), l.y(), l.z(), r.x(), r.y(), r.z());
-             }), "length"_a, "rotation"_a)
-
-        .def(py::init<>([](const EllipsoidInfo &info) {
+        .def(py::init([](const lpmalgos::Matrix &matrix) {
+                return new Ellipsoid(matrix);
+             }), "matrix"_a)
+        .def(py::init([](const EllipsoidInfo &info) {
                 return new Ellipsoid(info);
             }), "ellipsoid_info"_a.noconvert())
-
-        .def("info", [](Ellipsoid &self) { return self.info(); })
+        .def(py::init([](){ return new Ellipsoid(); }))
 
         .def("forward",
             [](Ellipsoid &self, const lpmalgos::Location &p) {
@@ -125,6 +118,7 @@ void register_lpmalgos_module(py::module_ &m)
         .def("mid_axis", [](Ellipsoid &self) { return self.mid_axis(); })
         .def("minor_axis", [](Ellipsoid &self) { return self.minor_axis(); })
 
+        .def("info", [](Ellipsoid &self) { return self.info(); })
         .def("__str__", [](Ellipsoid &self) { return self.to_string(); });
 
     m.def("extract_ellipsoid_info", lpmalgos::extract_ellipsoid_info, "T"_a);
@@ -135,22 +129,22 @@ void register_lpmalgos_module(py::module_ &m)
     py::class_<Neighborhood> neighborhood(m, "Neighborhood", py::module_local());
 
     neighborhood
-        .def(py::init<>([](const py::array_t<int64_t, flags> &locs,
-                           const Ellipsoid &ellipsoid) {
+        .def(py::init([](const py::array_t<int64_t, flags> &locs,
+                         const Ellipsoid &ellipsoid) {
                 return new Neighborhood(fromarray(locs), ellipsoid);
              }), "locations"_a.noconvert(), "ellipsoid"_a.noconvert())
-        .def(py::init<>([](const py::array_t<int64_t, flags> &locs) {
+        .def(py::init([](const py::array_t<int64_t, flags> &locs) {
                 return new Neighborhood(fromarray(locs));
              }), "locations"_a.noconvert())
 
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &p, int max_size) {
                 return asarray(self.find_neighbors(p, max_size));
-            }, "point"_a, "max_size"_a)
+            }, "point"_a, "max_size"_a.noconvert())
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &p, double max_radius) {
                 return asarray(self.find_neighbors(p, max_radius));
-            }, "point"_a, "max_radius"_a)
+            }, "point"_a, "max_radius"_a.noconvert())
         .def("nearest_neighbor",
             [](Neighborhood &self, const lpmalgos::Location &p) {
                 return self.nearest_neighbor(p);
