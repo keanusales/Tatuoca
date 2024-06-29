@@ -148,7 +148,7 @@ def differs(curves: larrs, basels: larrs, dname: str, alt: int):
 
 # %%
 shape, alt = (1800, 4590), 4590
-images = enumerate(imopen(r"Imagens"))
+images = enumerate(imopen(r"Imagens\\3imagem.tiff"))
 for i, (name, opened) in images:
   print(f"{i} - Imagem atual: {name}")
   if not isdir(name): mkdir(name)

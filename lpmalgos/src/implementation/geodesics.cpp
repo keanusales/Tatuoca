@@ -3,6 +3,7 @@
 #pragma warning(disable: 4267)
 
 #include "geodesics.h"
+#include <iostream>
 #include <queue>
 #include <map>
 
@@ -42,6 +43,8 @@ std::vector<int> find_clusters(const Locations &locs,
     for (int i = 0; i < locs.size(); ++i) {
         neis[i] = nei.find_neighbors(locs[i], r_tol);
     }
+
+    std::cout << "Neighbors found!\n";
 
     std::vector<int> support_size(locs.size(), 0);
     std::vector<int> total_size(locs.size(), 0);
@@ -105,6 +108,8 @@ std::vector<int> find_clusters(const Locations &locs,
         }
     }
 
+    std::cout << "Weights found!\n";
+
     std::vector<int> cluster_ids(locs.size(), -1);
 
     int cluster_id = 0;
@@ -132,6 +137,8 @@ std::vector<int> find_clusters(const Locations &locs,
             ++cluster_id;
         }
     }
+
+    std::cout << "Clusters found!\n";
 
     return cluster_ids;
 }
