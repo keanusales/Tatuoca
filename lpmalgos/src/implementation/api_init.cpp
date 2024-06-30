@@ -13,8 +13,6 @@ using namespace py::literals;
 
 const int flags = py::array::c_style + py::array::forcecast;
 
-#pragma warning(disable: 4018)
-
 lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
     if (entrie.ndim() != 2 || entrie.shape(1) != size) {
@@ -22,13 +20,11 @@ lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
     }
     lpmalgos::Locations locs(entrie.shape(0));
     auto view = entrie.unchecked<2>();
-    for (size_t i = 0; i < entrie.shape(0); ++i) {
+    for (size_t i = 0; i < (size_t) entrie.shape(0); ++i) {
         locs[i] = Eigen::Map<const lpmalgos::Location>(&view(i, 0));
     }
     return locs;
 }
-
-#pragma warning(default: 4018)
 
 py::array_t<double, flags> asarray(lpmalgos::Locations &&entrie) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
@@ -62,7 +58,7 @@ void register_lpmalgos_module(py::module_ &m)
                               const lpmalgos::Ellipsoid &ani,
                               double r_tol, double angular_tol,
                               double support_threshold,
-                              int min_support_size){
+                              size_t min_support_size){
             return asarray(lpmalgos::find_clusters(fromarray(locs), ani,
                 r_tol, angular_tol, support_threshold, min_support_size));
         }, "locs"_a.noconvert(), "anisotropy"_a.noconvert(), "r_tol"_a,
@@ -138,7 +134,7 @@ void register_lpmalgos_module(py::module_ &m)
              }), "locations"_a.noconvert())
 
         .def("find_neighbors",
-            [](Neighborhood &self, const lpmalgos::Location &p, int max_size) {
+            [](Neighborhood &self, const lpmalgos::Location &p, size_t max_size) {
                 return asarray(self.find_neighbors(p, max_size));
             }, "point"_a, "max_size"_a.noconvert())
         .def("find_neighbors",

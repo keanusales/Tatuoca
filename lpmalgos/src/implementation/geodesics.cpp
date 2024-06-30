@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma warning(disable: 4267)
-
 #include "geodesics.h"
 #include <iostream>
 #include <queue>
@@ -27,11 +25,11 @@ double angular_distance(const Location &A,
     return std::acos(std::fabs(u.dot(v) / (u.norm() * v.norm())));
 }
 
-std::vector<int> find_clusters(const Locations &locs,
-                               const Ellipsoid &ani,
-                               double r_tol, double angular_tol,
-                               double support_threshold,
-                               int min_support_size)
+std::vector<int16_t> find_clusters(const Locations &locs,
+                                   const Ellipsoid &ani,
+                                   double r_tol, double angular_tol,
+                                   double support_threshold,
+                                   size_t min_support_size)
 {
     angular_tol = std::fabs(pi * angular_tol / 180);
     unsigned n_threads = num_threads();
@@ -40,22 +38,22 @@ std::vector<int> find_clusters(const Locations &locs,
     std::vector<std::vector<size_t>> neis(locs.size());
 
 #pragma omp parallel for num_threads(n_threads)
-    for (int i = 0; i < locs.size(); ++i) {
+    for (int64_t i = 0; i < (int64_t) locs.size(); ++i) {
         neis[i] = nei.find_neighbors(locs[i], r_tol);
     }
 
     std::cout << "Neighbors found!\n";
 
-    std::vector<int> support_size(locs.size(), 0);
-    std::vector<int> total_size(locs.size(), 0);
+    std::vector<size_t> support_size(locs.size(), 0);
+    std::vector<size_t> total_size(locs.size(), 0);
 
-    std::vector<std::map<int, int>> weight(locs.size());
-    std::vector<std::map<int, int>> total_weight(locs.size());
+    std::vector<std::map<size_t, size_t>> weight(locs.size());
+    std::vector<std::map<size_t, size_t>> total_weight(locs.size());
 
-    std::vector<std::vector<int>> G(locs.size());
+    std::vector<std::vector<size_t>> G(locs.size());
 
 #pragma omp parallel for num_threads(n_threads)
-    for (int iA = 0; iA < locs.size(); ++iA) {
+    for (int64_t iA = 0; iA < (int64_t) locs.size(); ++iA) {
         const auto &A = locs[iA];
 
         for (size_t &iB : neis[iA]) {
@@ -110,13 +108,13 @@ std::vector<int> find_clusters(const Locations &locs,
 
     std::cout << "Weights found!\n";
 
-    std::vector<int> cluster_ids(locs.size(), -1);
+    std::vector<int16_t> cluster_ids(locs.size(), -1);
 
-    int cluster_id = 0;
+    int16_t cluster_id = 0;
 
-    for (int i = 0; i < locs.size(); ++i) {
+    for (size_t i = 0; i < locs.size(); ++i) {
         if (cluster_ids[i] == -1) {
-            std::queue<int> Q;
+            std::queue<size_t> Q;
             double t = support_size[i] / double(total_size[i]);
             if (t < support_threshold) {
                 continue;
@@ -124,9 +122,9 @@ std::vector<int> find_clusters(const Locations &locs,
             cluster_ids[i] = cluster_id;
             Q.push(i);
             while (!Q.empty()) {
-                int iu = Q.front();
+                size_t iu = Q.front();
                 Q.pop();
-                for (int iv : G[iu]) {
+                for (size_t iv : G[iu]) {
                     double w = weight[iu][iv] / double(total_weight[iu][iv]);
                     if (w > support_threshold && cluster_ids[iv] == -1) {
                         cluster_ids[iv] = cluster_id;
@@ -144,5 +142,3 @@ std::vector<int> find_clusters(const Locations &locs,
 }
 
 } // namespace lpmalgos
-
-#pragma warning(default: 4267)

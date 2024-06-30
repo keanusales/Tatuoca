@@ -54,7 +54,7 @@ public:
     Neighborhood(const Locations &locs);
 
     std::vector<size_t> find_neighbors(const Location &p,
-                                       int max_neighbors) const;
+                                       size_t max_neighbors) const;
     std::vector<size_t> find_neighbors(const Location &p,
                                        double max_radius) const;
 
@@ -63,15 +63,15 @@ public:
     size_t size() const { return cloud.size(); }
 
 private:
-    using Point_cloud = __private_nanoflann::PointCloud<double>;
     using location_function = std::function<Location(size_t)>;
-    using my_kd_tree_t = nanoflann::KDTreeSingleIndexAdaptor
-        <nanoflann::L2_Simple_Adaptor<double, Point_cloud>, Point_cloud, 3, size_t>;
+    using Point_cloud = __private_nanoflann::PointCloud<double>;
+    using l2adaptor = nanoflann::L2_Simple_Adaptor<double, Point_cloud>;
+    using kd_tree = nanoflann::KDTreeSingleIndexAdaptor<l2adaptor, Point_cloud, 3, size_t>;
 
     Neighborhood(size_t size, const location_function &loc);
 
     Point_cloud cloud;
-    std::unique_ptr<my_kd_tree_t> kdtree;
+    std::unique_ptr<kd_tree> kdtree;
 
     bool use_anisotropy = false;
     Ellipsoid anisotropy;

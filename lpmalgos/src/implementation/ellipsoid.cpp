@@ -91,10 +91,10 @@ Matrix sort_matrix3d(Matrix m, bool orthogonalize)
     Location u3 = m.row(2);
 
     Locations lines{u1, u2, u3};
-    std::vector<std::tuple<double, int>> line_norms{
-        std::make_tuple(u1.norm(), 0),
-        std::make_tuple(u2.norm(), 1),
-        std::make_tuple(u3.norm(), 2)};
+    std::vector<std::tuple<double, uint8_t>> line_norms{
+        std::make_tuple(u1.norm(), 0Ui8),
+        std::make_tuple(u2.norm(), 1Ui8),
+        std::make_tuple(u3.norm(), 2Ui8)};
     std::sort(line_norms.begin(), line_norms.end());
 
     m.row(0) = lines[std::get<1>(line_norms[0])];

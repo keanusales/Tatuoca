@@ -47,7 +47,7 @@ public:
         Locations result(locs.size());
         unsigned n_threads = num_threads();
 #pragma omp parallel for num_threads(n_threads)
-        for (int i = 0; i < locs.size(); ++i) {
+        for (int64_t i = 0; i < (int64_t) locs.size(); ++i) {
             result[i] = forward(locs[i]);
         }
         return result;
@@ -58,7 +58,7 @@ public:
         Locations result(locs.size());
         unsigned n_threads = num_threads();
 #pragma omp parallel for num_threads(n_threads)
-        for (int i = 0; i < locs.size(); ++i) {
+        for (int64_t i = 0; i < (int64_t) locs.size(); ++i) {
             result[i] = backward(locs[i]);
         }
         return result;

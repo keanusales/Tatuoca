@@ -1,26 +1,9 @@
 #pragma once
 
-#pragma warning(disable: 4267)
-
 #include "neighborhood.h"
 
 namespace lpmalgos
 {
-
-Neighborhood::Neighborhood(size_t size, const location_function &loc)
-{
-    use_anisotropy = false;
-
-    for (size_t i = 0; i < size; ++i) {
-        auto p = loc(i);
-        Point_cloud::Point point{p.x(), p.y(), p.z()};
-        cloud.pts.push_back(point);
-    }
-
-    nanoflann::KDTreeSingleIndexAdaptorParams params;
-    params.leaf_max_size = 10;
-    kdtree = std::make_unique<my_kd_tree_t>(3, cloud, params);
-}
 
 Neighborhood::Neighborhood(const Locations &locs,
                            const Ellipsoid &ani)
@@ -37,8 +20,20 @@ Neighborhood::Neighborhood(const Locations &locs)
     use_anisotropy = false;
 }
 
+Neighborhood::Neighborhood(size_t size, const location_function &loc)
+{
+    for (size_t i = 0; i < size; ++i) {
+        auto p = loc(i);
+        Point_cloud::Point point{p.x(), p.y(), p.z()};
+        cloud.pts.push_back(point);
+    }
+
+    nanoflann::KDTreeSingleIndexAdaptorParams params;
+    kdtree = std::make_unique<kd_tree>(3, cloud, params);
+}
+
 std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
-                                                 int max_neighbors) const
+                                                 size_t max_neighbors) const
 {
     if (max_neighbors > size()) {
         max_neighbors = size();
@@ -57,7 +52,7 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
     }
 
     std::vector<size_t> neis(max_neighbors);
-    auto dists = std::make_unique<double>(max_neighbors);
+    auto dists = std::make_unique<double[]>(max_neighbors);
     nanoflann::KNNResultSet<double> resultSet(max_neighbors);
     resultSet.init(neis.data(), dists.get());
     (*kdtree).findNeighbors(resultSet, &query_pt[0],
@@ -97,10 +92,8 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
 
 size_t Neighborhood::nearest_neighbor(const Location &p)
 {
-    auto neis = find_neighbors(p, 1);
+    auto neis = find_neighbors(p, 1Ui64);
     return neis[0];
 }
 
 } // namespace lpmalgos
-
-#pragma warning(default: 4267)
