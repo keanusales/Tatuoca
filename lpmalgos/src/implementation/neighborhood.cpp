@@ -32,6 +32,10 @@ Neighborhood::Neighborhood(size_t size, const location_function &loc)
     kdtree = std::make_unique<kd_tree>(3, cloud, params);
 }
 
+#pragma warning(push)
+#pragma warning(disable: 4267)
+
+// TODO Descobrir o que está causando o warning acima
 std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
                                                  size_t max_neighbors) const
 {
@@ -60,6 +64,8 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
 
     return neis;
 }
+
+#pragma warning(pop)
 
 std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
                                                  double max_radius) const
