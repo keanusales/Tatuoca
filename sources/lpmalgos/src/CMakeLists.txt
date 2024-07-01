@@ -5,7 +5,7 @@ if (MSVC)
   add_definitions("/D_POSIX_")
 endif()
 
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 find_package(Threads)
 
 set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR})

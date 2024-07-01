@@ -68,12 +68,13 @@ void register_lpmalgos_module(py::module_ &m)
     py::class_<EllipsoidInfo> ellipsoid_info(m, "EllipsoidInfo",
                                              py::module_local());
 
-    ellipsoid_info.def("r1", [](EllipsoidInfo &self) { return self.r1; });
-    ellipsoid_info.def("r2", [](EllipsoidInfo &self) { return self.r2; });
-    ellipsoid_info.def("r3", [](EllipsoidInfo &self) { return self.r3; });
-    ellipsoid_info.def("azimuth", [](EllipsoidInfo &self) { return self.azimuth; });
-    ellipsoid_info.def("dip", [](EllipsoidInfo &self) { return self.dip; });
-    ellipsoid_info.def("rake", [](EllipsoidInfo &self) { return self.rake; });
+    ellipsoid_info
+        .def("r1", [](EllipsoidInfo &self) { return self.r1; })
+        .def("r2", [](EllipsoidInfo &self) { return self.r2; })
+        .def("r3", [](EllipsoidInfo &self) { return self.r3; })
+        .def("azimuth", [](EllipsoidInfo &self) { return self.azimuth; })
+        .def("dip", [](EllipsoidInfo &self) { return self.dip; })
+        .def("rake", [](EllipsoidInfo &self) { return self.rake; });
 
     using lpmalgos::Ellipsoid;
     py::class_<Ellipsoid> ellipsoid(m, "Ellipsoid", py::module_local());
