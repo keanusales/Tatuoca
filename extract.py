@@ -150,7 +150,7 @@ def differs(curves: larrs, basels: larrs, dname: str, alt: int):
 shape, alt = (1800, 4590), 4590
 images = enumerate(imopen(r"Imagens"))
 for i, (name, opened) in images:
-  print(f"{i} - Imagem atual: {name}")
+  print(f"{i + 1} - Imagem {name}")
   if not isdir(name): mkdir(name)
 
   cutted = cutImage(opened, shape)
