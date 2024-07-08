@@ -28,11 +28,8 @@ template <typename T> struct PointCloud {
     //  "if/else's" are actually solved at compile time.
     inline T kdtree_get_pt(const size_t idx, const size_t dim) const
     {
-        if (dim == 0)
-            return pts[idx].x;
-        else if (dim == 1)
-            return pts[idx].y;
-        return pts[idx].z;
+        const T ret[3] = {pts[idx].x, pts[idx].y, pts[idx].z};
+        return ret[dim];
     }
 
     // Optional bounding-box computation: return false to default to a standard
@@ -53,12 +50,12 @@ public:
     Neighborhood(const Locations &locs, const Ellipsoid &ani);
     Neighborhood(const Locations &locs);
 
-    std::vector<size_t> find_neighbors(const Location &p,
+    std::vector<size_t> find_neighbors(const Location &loc,
                                        size_t max_neighbors) const;
-    std::vector<size_t> find_neighbors(const Location &p,
+    std::vector<size_t> find_neighbors(const Location &loc,
                                        double max_radius) const;
 
-    size_t nearest_neighbor(const Location &p);
+    size_t nearest_neighbor(const Location &loc);
 
     size_t size() const { return cloud.size(); }
 
@@ -68,7 +65,7 @@ private:
     using l2adaptor = nanoflann::L2_Simple_Adaptor<double, Point_cloud>;
     using kd_tree = nanoflann::KDTreeSingleIndexAdaptor<l2adaptor, Point_cloud, 3, size_t>;
 
-    Neighborhood(size_t size, const location_function &loc);
+    Neighborhood(size_t size, const location_function &func);
 
     Point_cloud cloud;
     std::unique_ptr<kd_tree> kdtree;

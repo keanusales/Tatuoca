@@ -28,18 +28,18 @@ lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
 
 py::array_t<double, flags> asarray(lpmalgos::Locations &&entrie) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
-    py::array_t<double, flags> resp({entrie.size(), size});
-    auto view = resp.mutable_unchecked<2>();
+    py::array_t<double, flags> output({entrie.size(), size});
+    auto view = output.mutable_unchecked<2>();
     for (size_t i = 0; i < entrie.size(); ++i) {
         Eigen::Map<lpmalgos::Location>(&view(i, 0)) = entrie[i];
     }
-    return resp;
+    return output;
 }
 
 template <typename T>
 inline py::array_t<T> asarray(std::vector<T> &&entrie) {
-    T *data = entrie.data();
     size_t size = entrie.size();
+    T *data = entrie.data();
     std::unique_ptr<std::vector<T>> ptr =
         std::make_unique<std::vector<T>>(std::move(entrie));
     py::capsule capsule(ptr.get(), [](void* foo) {
@@ -93,11 +93,11 @@ void register_lpmalgos_module(py::module_ &m)
         .def(py::init([](){ return new Ellipsoid(); }))
 
         .def("forward",
-            [](Ellipsoid &self, const lpmalgos::Location &p) {
-                return self.forward(p); }, "location"_a)
+            [](Ellipsoid &self, const lpmalgos::Location &loc) {
+                return self.forward(loc); }, "loc"_a)
         .def("backward",
-            [](Ellipsoid &self, const lpmalgos::Location &p) {
-                return self.backward(p); }, "location"_a)
+            [](Ellipsoid &self, const lpmalgos::Location &loc) {
+                return self.backward(loc); }, "loc"_a)
 
         .def("forward",
             [](Ellipsoid &self, const py::array_t<int64_t, flags> &locs) {
@@ -135,17 +135,17 @@ void register_lpmalgos_module(py::module_ &m)
              }), "locations"_a.noconvert())
 
         .def("find_neighbors",
-            [](Neighborhood &self, const lpmalgos::Location &p, size_t max_size) {
-                return asarray(self.find_neighbors(p, max_size));
-            }, "point"_a, "max_size"_a.noconvert())
+            [](Neighborhood &self, const lpmalgos::Location &loc, size_t max_size) {
+                return asarray(self.find_neighbors(loc, max_size));
+            }, "loc"_a, "max_size"_a.noconvert())
         .def("find_neighbors",
-            [](Neighborhood &self, const lpmalgos::Location &p, double max_radius) {
-                return asarray(self.find_neighbors(p, max_radius));
-            }, "point"_a, "max_radius"_a.noconvert())
+            [](Neighborhood &self, const lpmalgos::Location &loc, double max_radius) {
+                return asarray(self.find_neighbors(loc, max_radius));
+            }, "loc"_a, "max_radius"_a.noconvert())
         .def("nearest_neighbor",
-            [](Neighborhood &self, const lpmalgos::Location &p) {
-                return self.nearest_neighbor(p);
-            }, "point"_a);
+            [](Neighborhood &self, const lpmalgos::Location &loc) {
+                return self.nearest_neighbor(loc);
+            }, "loc"_a);
 }
 
 PYBIND11_MODULE(lpmalgos, m) { register_lpmalgos_module(m); }

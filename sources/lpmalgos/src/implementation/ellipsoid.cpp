@@ -154,19 +154,18 @@ EllipsoidInfo extract_ellipsoid_info(const Matrix &other)
     return info;
 }
 
-EllipsoidInfo::EllipsoidInfo(double r1, double r2, double r3, double azimuth,
-                             double dip, double rake)
+EllipsoidInfo::EllipsoidInfo(double r1, double r2, double r3,
+        double azimuth, double dip, double rake)
     : r1(r1), r2(r2), r3(r3), azimuth(azimuth), dip(dip), rake(rake)
 {
 }
 
-Ellipsoid::Ellipsoid(double r1, double r2, double r3, double azimuth,
-                     double dip, double rake)
+Ellipsoid::Ellipsoid(double r1, double r2, double r3,
+        double azimuth, double dip, double rake)
 {
-    auto angle = std::make_tuple(90 - azimuth, -dip, rake);
-    double alpha = std::get<0>(angle) / 180 * pi;
-    double beta = std::get<1>(angle) / 180 * pi;
-    double theta = std::get<2>(angle) / 180 * pi;
+    double alpha = (90 - azimuth) / 180 * pi;
+    double beta = (-dip) / 180 * pi;
+    double theta = rake / 180 * pi;
 
     if (r1 <= 1e-30) {
         r1 = 1;
@@ -187,8 +186,8 @@ Ellipsoid::Ellipsoid(double r1, double r2, double r3, double azimuth,
     ry << cos(beta), 0, -sin(beta), 0, 1, 0, sin(beta), 0, cos(beta);
     rx << 1, 0, 0, 0, cos(theta), sin(theta), 0, -sin(theta), cos(theta);
 
-    trans_ = S * ((rx * ry) * rz);
-    inv_trans_ = trans_.inverse();
+    trans = S * ((rx * ry) * rz);
+    inv_trans = trans.inverse();
 }
 
 Ellipsoid::Ellipsoid(const EllipsoidInfo &info)
@@ -198,17 +197,18 @@ Ellipsoid::Ellipsoid(const EllipsoidInfo &info)
 
 Ellipsoid::Ellipsoid(const Matrix &T)
 {
-    trans_ = T;
-    inv_trans_ = T.inverse();
+    trans = T;
+    inv_trans = T.inverse();
 }
 
 Ellipsoid::Ellipsoid()
 {
-    trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-    inv_trans_ << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+    trans << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+    inv_trans << 1, 0, 0, 0, 1, 0, 0, 0, 1;
 }
 
-EllipsoidInfo Ellipsoid::info() const {
+EllipsoidInfo Ellipsoid::info() const
+{
     return extract_ellipsoid_info(matrix());
 }
 

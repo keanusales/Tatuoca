@@ -20,11 +20,11 @@ Neighborhood::Neighborhood(const Locations &locs)
     use_anisotropy = false;
 }
 
-Neighborhood::Neighborhood(size_t size, const location_function &loc)
+Neighborhood::Neighborhood(size_t size, const location_function &func)
 {
     for (size_t i = 0; i < size; ++i) {
-        auto p = loc(i);
-        Point_cloud::Point point{p.x(), p.y(), p.z()};
+        auto loc = func(i);
+        Point_cloud::Point point{loc.x(), loc.y(), loc.z()};
         cloud.pts.push_back(point);
     }
 
@@ -36,7 +36,7 @@ Neighborhood::Neighborhood(size_t size, const location_function &loc)
 #pragma warning(disable: 4267)
 
 // TODO Descobrir o que está causando o warning acima
-std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
+std::vector<size_t> Neighborhood::find_neighbors(const Location &loc,
                                                  size_t max_neighbors) const
 {
     if (max_neighbors > size()) {
@@ -45,14 +45,14 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
     double query_pt[3];
 
     if (use_anisotropy) {
-        Location q = anisotropy.forward(p);
-        query_pt[0] = q.x();
-        query_pt[1] = q.y();
-        query_pt[2] = q.z();
+        Location loc2 = anisotropy.forward(loc);
+        query_pt[0] = loc2.x();
+        query_pt[1] = loc2.y();
+        query_pt[2] = loc2.z();
     } else {
-        query_pt[0] = p.x();
-        query_pt[1] = p.y();
-        query_pt[2] = p.z();
+        query_pt[0] = loc.x();
+        query_pt[1] = loc.y();
+        query_pt[2] = loc.z();
     }
 
     std::vector<size_t> neis(max_neighbors);
@@ -67,21 +67,21 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
 
 #pragma warning(pop)
 
-std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
+std::vector<size_t> Neighborhood::find_neighbors(const Location &loc,
                                                  double max_radius) const
 {
     max_radius *= max_radius;
     double query_pt[3];
 
     if (use_anisotropy) {
-        Location q = anisotropy.forward(p);
-        query_pt[0] = q.x();
-        query_pt[1] = q.y();
-        query_pt[2] = q.z();
+        Location loc2 = anisotropy.forward(loc);
+        query_pt[0] = loc2.x();
+        query_pt[1] = loc2.y();
+        query_pt[2] = loc2.z();
     } else {
-        query_pt[0] = p.x();
-        query_pt[1] = p.y();
-        query_pt[2] = p.z();
+        query_pt[0] = loc.x();
+        query_pt[1] = loc.y();
+        query_pt[2] = loc.z();
     }
 
     std::vector<nanoflann::ResultItem<size_t, double>> ind;
@@ -96,9 +96,9 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &p,
     return neis;
 }
 
-size_t Neighborhood::nearest_neighbor(const Location &p)
+size_t Neighborhood::nearest_neighbor(const Location &loc)
 {
-    auto neis = find_neighbors(p, 1Ui64);
+    auto neis = find_neighbors(loc, 1Ui64);
     return neis[0];
 }
 
