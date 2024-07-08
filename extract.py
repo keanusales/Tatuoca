@@ -1,4 +1,3 @@
-# %%
 from numpy.typing import NDArray
 from numpy import integer, floating
 from numpy import zeros, vstack
@@ -14,7 +13,6 @@ from skeleton import skeletonize
 from shutil import rmtree
 from typing import Any
 
-# %%
 NDArray = NDArray[integer[Any] | floating[Any]]
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
 larrs = list[NDArray]
@@ -33,7 +31,6 @@ def bgr2gray(entrie: MatLike):
 def gray2bgr(entrie: MatLike):
   return cvtColor(entrie, COLOR_GRAY2BGR)
 
-# %%
 def imopen(entrie: str):
   def imopen_core(entrie: str):
     name, ext = entrie.split(".")
@@ -51,7 +48,6 @@ def imopen(entrie: str):
 
   raise FileNotFoundError(f"{entrie!r} ñ existe!")
 
-# %%
 def cutImage(entrie: MatLike, shape: Size):
   if len(shape) != 2: raise TypeError(
     "\"shape\" não tem tamanho 2!")
@@ -61,7 +57,6 @@ def cutImage(entrie: MatLike, shape: Size):
   print("cutImage terminado!")
   return cutted
 
-# %%
 def gaussProcess(entrie: MatLike, size = 19, C = 10):
   output = adaptiveThreshold(entrie, 255,
     ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, size, C)
@@ -69,13 +64,11 @@ def gaussProcess(entrie: MatLike, size = 19, C = 10):
   print("gaussProcess terminado!")
   return output
 
-# %%
 def cannyFilter(entrie: MatLike):
   output = Canny(entrie, 200, 255, L2gradient = True)
   print("cannyFilter terminado!")
   return output
 
-# %%
 def separeLines(entrie: MatLike, quant = 2000):
   def separeLines_core():
     dim1, dim2 = (entrie == WHITE).nonzero()
@@ -92,7 +85,6 @@ def separeLines(entrie: MatLike, quant = 2000):
   print("separeLines terminado!")
   return output
 
-# %%
 def meanRemove(entrie: larrs):
   MIN, MAX = 550, 5
   curves: larrs = []
@@ -110,7 +102,6 @@ def meanRemove(entrie: larrs):
   print("meanRemove terminado!")
   return curves, basels
 
-# %%
 def saveLines(lines: larrs, dname: str, dtype: str, shape: Size):
   if len(shape) != 2: raise TypeError("shape sem tam. 2!")
   pasta, preta = f"{dname}/lines", zeros(shape, "u1")
@@ -124,7 +115,6 @@ def saveLines(lines: larrs, dname: str, dtype: str, shape: Size):
       output.writelines(map(str, subarray))
   print("saveLines terminado!")
 
-# %%
 def sobrepor(entrie: MatLike, listas: larrs):
   output = gray2bgr(entrie)
   dim1, dim2 = zip(*(e for a in listas for e in a))
@@ -132,7 +122,6 @@ def sobrepor(entrie: MatLike, listas: larrs):
   print("sobrepor terminado!")
   return output
 
-# %%
 def differs(curves: larrs, basels: larrs, dname: str, alt: int):
   pasta, const = f"{dname}/diffs", (200 / alt)
   if not isdir(pasta): mkdir(pasta)
@@ -146,7 +135,6 @@ def differs(curves: larrs, basels: larrs, dname: str, alt: int):
         saida.write(f"{el1}{el2} - {value}\n")
   print("differs terminado!")
 
-# %%
 shape, alt = (1800, 4590), 4590
 images = enumerate(imopen(r"Imagens"))
 for i, (name, opened) in images:

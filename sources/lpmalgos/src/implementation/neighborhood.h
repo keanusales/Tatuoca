@@ -9,8 +9,10 @@ namespace lpmalgos
 
 namespace __private_nanoflann
 {
-template <typename T> struct PointCloud {
-    struct Point {
+template <typename T> struct PointCloud
+{
+    struct Point
+    {
         T x, y, z;
     };
 
@@ -24,12 +26,11 @@ template <typename T> struct PointCloud {
 
     // Returns the dim'th component of the idx'th point in the class:
     // Since this is inlined and the "dim" argument is typically an immediate
-    // value, the
-    //  "if/else's" are actually solved at compile time.
+    // value, the "if/else's" are actually solved at compile time.
     inline T kdtree_get_pt(const size_t idx, const size_t dim) const
     {
-        const T ret[3] = {pts[idx].x, pts[idx].y, pts[idx].z};
-        return ret[dim];
+        const T ret[] = {pts[idx].x, pts[idx].y, pts[idx].z};
+        return ret[(dim < 3) ? dim : 2];
     }
 
     // Optional bounding-box computation: return false to default to a standard

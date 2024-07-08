@@ -39,11 +39,9 @@ Neighborhood::Neighborhood(size_t size, const location_function &func)
 std::vector<size_t> Neighborhood::find_neighbors(const Location &loc,
                                                  size_t max_neighbors) const
 {
-    if (max_neighbors > size()) {
-        max_neighbors = size();
-    }
-    double query_pt[3];
+    if (max_neighbors > size()) max_neighbors = size();
 
+    double query_pt[3];
     if (use_anisotropy) {
         Location loc2 = anisotropy.forward(loc);
         query_pt[0] = loc2.x();
@@ -71,8 +69,8 @@ std::vector<size_t> Neighborhood::find_neighbors(const Location &loc,
                                                  double max_radius) const
 {
     max_radius *= max_radius;
-    double query_pt[3];
 
+    double query_pt[3];
     if (use_anisotropy) {
         Location loc2 = anisotropy.forward(loc);
         query_pt[0] = loc2.x();

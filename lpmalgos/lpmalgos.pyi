@@ -57,7 +57,7 @@ class Ellipsoid:
 
   @overload
   def forward(self,
-    location: ArrayLike
+    loc: ArrayLike
   ) -> NDArray[floating[Any]]: ...
 
   @overload
@@ -67,7 +67,7 @@ class Ellipsoid:
 
   @overload
   def backward(self,
-    location: ArrayLike
+    loc: ArrayLike
   ) -> NDArray[floating[Any]]: ...
 
   @overload
@@ -90,37 +90,39 @@ def extract_ellipsoid_info(
 ) -> EllipsoidInfo: ...
 
 def sort_matrix3d(
-  T: MatrixLike, orthogonalize: bool
+  T: MatrixLike,
+  orthogonalize: bool = True
 ) -> NDArray[floating[Any]]: ...
 
-def orthogonalize_axes(
-  T: MatrixLike, sort: bool
+def orthogonolize_axes(
+  T: MatrixLike,
+  sort: bool = True
 ) -> NDArray[floating[Any]]: ...
 
 class Neighborhood:
   @overload
   def __init__(self,
-    locations: NDArray[floating[Any]],
+    locs: NDArray[floating[Any]],
     ellipsoid: Ellipsoid
   ) -> None: ...
 
   @overload
   def __init__(self,
-    locations: NDArray[floating[Any]]
+    locs: NDArray[floating[Any]]
   ) -> None: ...
 
   @overload
   def find_neighbors(self,
-    point: ArrayLike,
+    loc: ArrayLike,
     max_size: int
-  ) -> NDArray[floating[Any]]: ...
+  ) -> NDArray[integer[Any]]: ...
 
   @overload
   def find_neighbors(self,
-    point: ArrayLike,
+    loc: ArrayLike,
     max_radius: float
-  ) -> NDArray[floating[Any]]: ...
+  ) -> NDArray[integer[Any]]: ...
 
   def nearest_neighbor(
-    point: ArrayLike
-  ) -> NDArray[floating[Any]]: ...
+    loc: ArrayLike
+  ) -> int: ...

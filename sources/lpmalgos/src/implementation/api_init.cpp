@@ -13,35 +13,35 @@ using namespace py::literals;
 
 const int flags = py::array::c_style + py::array::forcecast;
 
-lpmalgos::Locations fromarray(const py::array_t<double, flags> &entrie) {
+lpmalgos::Locations fromarray(const py::array_t<double, flags> &input) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
-    if (entrie.ndim() != 2 || entrie.shape(1) != size) {
+    if (input.ndim() != 2 || input.shape(1) != size) {
         throw py::cast_error("Cannot convert the input ndarray!");
     }
-    lpmalgos::Locations locs(entrie.shape(0));
-    auto view = entrie.unchecked<2>();
-    for (size_t i = 0; i < (size_t) entrie.shape(0); ++i) {
-        locs[i] = Eigen::Map<const lpmalgos::Location>(&view(i, 0));
+    lpmalgos::Locations output(input.shape(0));
+    auto view = input.unchecked<2>();
+    for (size_t i = 0; i < (size_t) input.shape(0); ++i) {
+        output[i] = Eigen::Map<const lpmalgos::Location>(&view(i, 0));
     }
-    return locs;
+    return output;
 }
 
-py::array_t<double, flags> asarray(lpmalgos::Locations &&entrie) {
+py::array_t<double, flags> asarray(lpmalgos::Locations &&input) {
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
-    py::array_t<double, flags> output({entrie.size(), size});
+    py::array_t<double, flags> output({input.size(), size});
     auto view = output.mutable_unchecked<2>();
-    for (size_t i = 0; i < entrie.size(); ++i) {
-        Eigen::Map<lpmalgos::Location>(&view(i, 0)) = entrie[i];
+    for (size_t i = 0; i < input.size(); ++i) {
+        Eigen::Map<lpmalgos::Location>(&view(i, 0)) = input[i];
     }
     return output;
 }
 
 template <typename T>
-inline py::array_t<T> asarray(std::vector<T> &&entrie) {
-    size_t size = entrie.size();
-    T *data = entrie.data();
+inline py::array_t<T> asarray(std::vector<T> &&input) {
+    size_t size = input.size();
+    T *data = input.data();
     std::unique_ptr<std::vector<T>> ptr =
-        std::make_unique<std::vector<T>>(std::move(entrie));
+        std::make_unique<std::vector<T>>(std::move(input));
     py::capsule capsule(ptr.get(), [](void* foo) {
         delete reinterpret_cast<std::vector<T>*>(foo);
     });
@@ -129,10 +129,10 @@ void register_lpmalgos_module(py::module_ &m)
         .def(py::init([](const py::array_t<int64_t, flags> &locs,
                          const Ellipsoid &ellipsoid) {
                 return new Neighborhood(fromarray(locs), ellipsoid);
-             }), "locations"_a.noconvert(), "ellipsoid"_a.noconvert())
+             }), "locs"_a.noconvert(), "ellipsoid"_a.noconvert())
         .def(py::init([](const py::array_t<int64_t, flags> &locs) {
                 return new Neighborhood(fromarray(locs));
-             }), "locations"_a.noconvert())
+             }), "locs"_a.noconvert())
 
         .def("find_neighbors",
             [](Neighborhood &self, const lpmalgos::Location &loc, size_t max_size) {
