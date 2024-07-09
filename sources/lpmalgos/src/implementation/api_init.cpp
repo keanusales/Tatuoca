@@ -13,7 +13,8 @@ using namespace py::literals;
 
 const int flags = py::array::c_style + py::array::forcecast;
 
-lpmalgos::Locations fromarray(const py::array_t<double, flags> &input) {
+lpmalgos::Locations fromarray(const py::array_t<double, flags> &input)
+{
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
     if (input.ndim() != 2 || input.shape(1) != size) {
         throw py::cast_error("Cannot convert the input ndarray!");
@@ -26,7 +27,8 @@ lpmalgos::Locations fromarray(const py::array_t<double, flags> &input) {
     return output;
 }
 
-py::array_t<double, flags> asarray(lpmalgos::Locations &&input) {
+py::array_t<double, flags> asarray(lpmalgos::Locations &&input)
+{
     const size_t size = lpmalgos::Location::SizeAtCompileTime;
     py::array_t<double, flags> output({input.size(), size});
     auto view = output.mutable_unchecked<2>();
@@ -37,7 +39,8 @@ py::array_t<double, flags> asarray(lpmalgos::Locations &&input) {
 }
 
 template <typename T>
-inline py::array_t<T> asarray(std::vector<T> &&input) {
+inline py::array_t<T> asarray(std::vector<T> &&input)
+{
     size_t size = input.size();
     T *data = input.data();
     std::unique_ptr<std::vector<T>> ptr =

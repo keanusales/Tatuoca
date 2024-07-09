@@ -16,12 +16,7 @@ double angular_distance(const Location &A,
 {
     Location u = A - C;
     Location v = B - C;
-    if (u.norm() < 1e-15) {
-        return pi / 2;
-    }
-    if (v.norm() < 1e-15) {
-        return pi / 2;
-    }
+    if ((u.norm() < 1e-15) || (v.norm() < 1e-15)) return pi / 2;
     return std::acos(std::fabs(u.dot(v) / (u.norm() * v.norm())));
 }
 
@@ -116,9 +111,7 @@ std::vector<int16_t> find_clusters(const Locations &locs,
         if (cluster_ids[i] == -1) {
             std::queue<size_t> Q;
             double t = support_size[i] / double(total_size[i]);
-            if (t < support_threshold) {
-                continue;
-            }
+            if (t < support_threshold) continue;
             cluster_ids[i] = cluster_id;
             Q.push(i);
             while (!Q.empty()) {

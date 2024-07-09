@@ -16,8 +16,6 @@ template <typename T> struct PointCloud
         T x, y, z;
     };
 
-    using coord_t = T; // The type of each coordinate
-
     std::vector<Point> pts;
     size_t size() const { return pts.size(); }
 
@@ -29,8 +27,9 @@ template <typename T> struct PointCloud
     // value, the "if/else's" are actually solved at compile time.
     inline T kdtree_get_pt(const size_t idx, const size_t dim) const
     {
-        const T ret[] = {pts[idx].x, pts[idx].y, pts[idx].z};
-        return ret[(dim < 3) ? dim : 2];
+        if (dim == 0) return pts[idx].x;
+        if (dim == 1) return pts[idx].y;
+        return pts[idx].z;
     }
 
     // Optional bounding-box computation: return false to default to a standard

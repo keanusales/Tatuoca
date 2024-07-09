@@ -1,7 +1,8 @@
-from cv2.typing import MatLike
+from numpy.typing import NDArray
+from numpy import integer
+from typing import Any
 
 def skeletonize(
-  entrie: MatLike,
+  entrie: NDArray[integer[Any]],
   distance: int
-) -> MatLike:
-  ...
+) -> NDArray[integer[Any]]: ...

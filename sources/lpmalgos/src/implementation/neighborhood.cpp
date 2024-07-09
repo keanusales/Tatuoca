@@ -35,7 +35,6 @@ Neighborhood::Neighborhood(size_t size, const location_function &func)
 #pragma warning(push)
 #pragma warning(disable: 4267)
 
-// TODO Descobrir o que está causando o warning acima
 std::vector<size_t> Neighborhood::find_neighbors(const Location &loc,
                                                  size_t max_neighbors) const
 {
