@@ -1,12 +1,8 @@
+from typing import Sequence, overload, Any
 from numpy import floating, integer
 from numpy.typing import NDArray
-from typing import overload, Any
 
-ArrayLike = (tuple[tuple[float, float, float]] |
-             NDArray[floating[Any]] | list[list[float]])
-
-MatrixLike = (tuple[tuple[float, float, float], ...] |
-              NDArray[floating[Any]] | list[list[float]])
+ArrayLike = Sequence[Sequence[float]] | NDArray[floating[Any]]
 
 def angular_distance(
   A: ArrayLike,
@@ -47,7 +43,7 @@ class Ellipsoid:
 
   @overload
   def __init__(self,
-    matrix: MatrixLike
+    matrix: ArrayLike
   ) -> None: ...
 
   @overload
@@ -86,16 +82,16 @@ class Ellipsoid:
   def __str__(self) -> str: ...
 
 def extract_ellipsoid_info(
-  T: MatrixLike
+  T: ArrayLike
 ) -> EllipsoidInfo: ...
 
 def sort_matrix3d(
-  T: MatrixLike,
+  T: ArrayLike,
   orthogonalize: bool = True
 ) -> NDArray[floating[Any]]: ...
 
 def orthogonolize_axes(
-  T: MatrixLike,
+  T: ArrayLike,
   sort: bool = True
 ) -> NDArray[floating[Any]]: ...
 

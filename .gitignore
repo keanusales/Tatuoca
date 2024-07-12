@@ -1,6 +1,9 @@
 # Image dir
 Imagens/
 
+# Year books
+livros ano/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
