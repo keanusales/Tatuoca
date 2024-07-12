@@ -1,6 +1,5 @@
 from numpy.typing import NDArray
-from numpy import (zeros, vstack,
-  errstate, integer, floating)
+from numpy import zeros, vstack, errstate, integer, floating
 from os.path import isfile, isdir, join
 from os import mkdir, scandir
 from itertools import pairwise, product
@@ -50,11 +49,11 @@ def imopen(entrie: str, index: int | None = None):
       yield from (imopen_core(join(entrie, e.name))
         for e in scandir(entrie) if e.is_file())
       return
-  raise FileNotFoundError(f"{entrie!r} ñ existe!")
+  raise FileNotFoundError(f"{entrie!r} não existe!")
 
 def cutImage(entrie: MatLike, shape: Size):
-  if len(shape) != 2: raise TypeError(
-    "\"shape\" não tem tamanho 2!")
+  if len(shape) != 2:
+    raise TypeError("shape sem tamanho 2!")
   x1, x2, y1, y2 = 180, 2445, 305, 6095
   cutted = entrie[x1:x2, y1:y2]
   cutted = resize(cutted, shape[::-1])
@@ -77,7 +76,7 @@ def DBScanSeparation(entrie: MatLike, quant = 2000):
   def DBScanSeparation_core():
     dim1, dim2 = (entrie == WHITE).nonzero()
     locs = zeros((len(dim1), 3), int)
-    locs[:, 0], locs[:, 1] = dim2, dim1
+    locs.T[0], locs.T[1] = dim2, dim1
     ani = Ellipsoid(((.3, 0, 0), (0, 2.6, 0), (0, 0, 0)))
     clusters = find_clusters(locs, ani, 20, 6, 1e-9, 1)
     for cluster in set(clusters):
@@ -127,16 +126,16 @@ def lineSeparation(entrie: NDArrays):
   return curves, basels
 
 def saveLines(lines: NDArrays, dname: str, dtype: str, shape: Size):
-  if len(shape) != 2: raise TypeError("shape sem tam. 2!")
-  pasta, preta = f"{dname}/lines", zeros(shape, "u1")
+  if len(shape) != 2: raise TypeError("shape sem tamanho 2!")
+  pasta, preta = f"{dname}/lines", zeros(shape, "uint8")
   if not isdir(pasta): mkdir(pasta)
   for i, subarray in enumerate(lines):
     imagem, (dim1, dim2) = preta.copy(), subarray.T
     imagem[dim1, dim2] = WHITE
     imwrite(fr"{pasta}\\{dtype}{i}.tif", imagem)
     with open(fr"{pasta}\\{dtype}{i}.txt", "w") as output:
-      output.write(f"Tam.: {shape}\n")
-      output.writelines(map(str, subarray))
+      output.write(f"Tamanho da imagem: {shape}\n")
+      output.writelines(f"{elem}\n" for elem in subarray)
   print("saveLines terminado!")
 
 def sobrepor(entrie: MatLike, listas: NDArrays):
@@ -146,21 +145,19 @@ def sobrepor(entrie: MatLike, listas: NDArrays):
   print("sobrepor terminado!")
   return output
 
-def differs(curves: NDArrays, basels: NDArrays, dname: str, alt: int):
-  pasta, const = f"{dname}/diffs", (200 / alt)
-  if not isdir(pasta): mkdir(pasta)
+def differs(curves: NDArrays, basels: NDArrays, dname: str, const: float):
+  if not isdir(pasta := f"{dname}/diffs"): mkdir(pasta)
   ecurves, ebasels = enumerate(curves), enumerate(basels)
   for (c, curve), (b, basel) in product(ecurves, ebasels):
-    mean = basel.T[0].mean(dtype = int)
-    with open(fr"{pasta}\\curve{c}base{b}.txt", "w") as saida:
-      for (e1, e2) in curve:
-        value = (mean - e1) * const
-        el1, el2 = (e1, e2), (mean, e2)
-        saida.write(f"{el1}{el2} - {value}\n")
+    mean = basel.T[0].mean(None, int)
+    values = (mean - curve.T[0]) * const
+    with open(fr"{pasta}\\curve{c}base{b}.txt", "w") as output:
+      output.writelines(f"{e1, e2}{mean, e2} - {value}\n"
+        for (e1, e2), value in zip(curve, values))
   print("differs terminado!")
 
 if __name__ == "__main__":
-  shape, alt = (1800, 4590), 4590
+  shape, const = (1800, 4590), (200 / 4590)
   for name, opened in imopen("Imagens"):
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
@@ -180,7 +177,7 @@ if __name__ == "__main__":
 
     saveLines(curves, name, "curve", shape)
     saveLines(basels, name, "basel", shape)
-    differs(curves, basels, name, alt)
+    differs(curves, basels, name, const)
 
     dbscan1 = sobrepor(skeleton, curves)
     dbscan2 = sobrepor(canny, curves)
