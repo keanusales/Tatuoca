@@ -132,7 +132,7 @@ def saveLines(lines: NDArrays, dname: str, dtype: str, shape: Size):
   for i, subarray in enumerate(lines):
     imagem, (dim1, dim2) = preta.copy(), subarray.T
     imagem[dim1, dim2] = WHITE
-    imwrite(fr"{pasta}\\{dtype}{i}.tif", imagem)
+    imwrite(fr"{pasta}\\{dtype}{i}.png", imagem)
     with open(fr"{pasta}\\{dtype}{i}.txt", "w") as output:
       output.write(f"Tamanho da imagem: {shape}\n")
       output.writelines(f"{elem}\n" for elem in subarray)
@@ -152,7 +152,7 @@ def differs(curves: NDArrays, basels: NDArrays, dname: str, const: float):
     mean = basel.T[0].mean(None, int)
     values = (mean - curve.T[0]) * const
     with open(fr"{pasta}\\curve{c}base{b}.txt", "w") as output:
-      output.writelines(f"{e1, e2}{mean, e2} - {value}\n"
+      output.writelines(f"({e1}, {mean}), {e2} - {value}\n"
         for (e1, e2), value in zip(curve, values))
   print("differs terminado!")
 
@@ -163,14 +163,14 @@ if __name__ == "__main__":
     if not isdir(name): mkdir(name)
 
     cutted = cutImage(opened, shape)
-    imwrite(f"{name}/cutted.tif", cutted)
+    imwrite(f"{name}/cutted.png", cutted)
     gauss = gaussProcess(cutted)
-    imwrite(f"{name}/gauss.tif", gauss)
+    imwrite(f"{name}/gauss.png", gauss)
     canny = cannyFilter(gauss)
-    imwrite(f"{name}/canny.tif", canny)
+    imwrite(f"{name}/canny.png", canny)
 
     skeleton = skeletonize(canny, 15)
-    imwrite(f"{name}/skeleton.tif", skeleton)
+    imwrite(f"{name}/skeleton.png", skeleton)
 
     separed = DBScanSeparation(skeleton)
     curves, basels = lineSeparation(separed)
@@ -181,8 +181,8 @@ if __name__ == "__main__":
 
     dbscan1 = sobrepor(skeleton, curves)
     dbscan2 = sobrepor(canny, curves)
-    imwrite(f"{name}/dbscan1.tif", dbscan1)
-    imwrite(f"{name}/dbscan2.tif", dbscan2)
+    imwrite(f"{name}/dbscan1.png", dbscan1)
+    imwrite(f"{name}/dbscan2.png", dbscan2)
     print("\n----------------------\n")
 
   print("Processo Terminado!")
