@@ -20,7 +20,7 @@ template <typename T> struct PointCloud
     size_t size() const { return pts.size(); }
 
     // Must return the number of data points
-    inline size_t kdtree_get_point_count() const { return pts.size(); }
+    inline size_t kdtree_get_point_count() const { return size(); }
 
     // Returns the dim'th component of the idx'th point in the class:
     // Since this is inlined and the "dim" argument is typically an immediate

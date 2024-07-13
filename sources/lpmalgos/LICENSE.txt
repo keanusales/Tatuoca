@@ -1,0 +1,73 @@
+_______________________
+ENGLISH VERSION
+_______________________
+
+End-User License Agreement (EULA) for “lpmalgos” Software
+Definitions:
+
+Software: Refers to the computer program named “lpmalgos.”
+Licensee: The individual or legal entity acquiring the right to use the Software.
+Licensor: The copyright holder of the Software.
+License Grant:
+
+The Licensor grants the Licensee a non-exclusive, non-transferable, and limited license to use the Software strictly in accordance with the terms of this EULA.
+The Licensee agrees not to:
+Copy, modify, or distribute the Software without express authorization from the Licensor.
+Decompile, reverse engineer, or attempt to obtain the Software’s source code.
+Restrictions:
+
+The Licensee may not sublicense, rent, lease, or transfer the Software to third parties.
+The Licensee may not use the Software for illegal or harmful purposes.
+Disclaimer of Warranty:
+
+The Software is provided “as is,” without warranties of any kind.
+The Licensor shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use or inability to use the Software.
+Term:
+
+This EULA becomes effective upon installation of the Software and remains valid until termination.
+
+Termination:
+
+The Licensor may terminate this EULA at any time if the Licensee violates its terms.
+
+Owner:
+
+The owner of the “lpmalgos” Software is Pericles Lopes Machado, CPF 811.346.732-72.
+
+_______________________
+Versao em Portugues
+_______________________
+
+Contrato de Licença de Usuário Final (EULA) para o Software “lpmalgos”
+1. Definições
+1.1. Software: Refere-se ao programa de computador denominado “lpmalgos”.
+
+1.2. Licenciado: A pessoa física ou jurídica que adquire o direito de uso do Software.
+
+1.3. Licenciante: O detentor dos direitos autorais do Software.
+
+2. Concessão de Licença
+2.1. O Licenciante concede ao Licenciado uma licença não exclusiva, intransferível e limitada para usar o Software estritamente de acordo com os termos deste EULA.
+
+2.2. O Licenciado concorda em não:
+
+Copiar, modificar ou distribuir o Software sem autorização expressa do Licenciante.
+Descompilar, engenharia reversa ou tentar obter o código-fonte do Software.
+3. Restrições
+3.1. O Licenciado não pode sublicenciar, alugar, arrendar ou transferir o Software a terceiros.
+
+3.2. O Licenciado não pode usar o Software para fins ilegais ou prejudiciais.
+
+4. Isenção de Responsabilidade
+4.1. O Software é fornecido “no estado em que se encontra”, sem garantias de qualquer tipo.
+
+4.2. O Licenciante não será responsável por quaisquer danos diretos, indiretos, incidentais ou consequenciais decorrentes do uso ou incapacidade de uso do Software.
+
+5. Vigência
+5.1. Este EULA entra em vigor na data da instalação do Software e permanece válido até rescisão.
+
+6. Rescisão
+6.1. O Licenciante pode rescindir este EULA a qualquer momento se o Licenciado violar seus termos.
+
+7. Proprietário
+7.1. O proprietário do Software “lpmalgos” é Pericles Lopes Machado, CPF 811.346.732-72.
