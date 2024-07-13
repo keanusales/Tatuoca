@@ -14,7 +14,6 @@ add_library(lpmalgos_impl STATIC
   ellipsoid.h
   machine.cpp
   machine.h
-  nanoflann.hpp
   neighborhood.cpp
   neighborhood.h
   geodesics.cpp
@@ -30,6 +29,7 @@ target_link_libraries(lpmalgos_impl PUBLIC
   OpenMP::OpenMP_CXX
   lpmalgos::base
   Eigen3::Eigen
+  nanoflann
   py::base
 )
 
