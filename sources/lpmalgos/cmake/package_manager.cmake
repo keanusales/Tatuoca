@@ -1,5 +1,4 @@
 option(HUNTER_ENABLED "Enable Hunter package manager support" ON)
-#set(HUNTER_JOBS_NUMBER 16 CACHE STRING "Hunter jobs number")
 if (WIN32)
     set(HUNTER_CONFIGURATION_TYPES "Release" CACHE STRING "Hunter configuration types")
     macro(get_WIN32_WINNT version)

@@ -16,8 +16,6 @@ set(USE_CCACHE ON CACHE BOOL "Use cache to accelerate compile time")
 set(lpmalgos_USE_GOLD_LINKER ON CACHE BOOL "Use gold linker")
 SET(SANITIZER "" CACHE STRING "sanitizer (address,memory,thread,undefined)")
 
-#set_property(CACHE lpmalgos_DEBUG_COMPRESS_SYMBOLS PROPERTY STRINGS Optimized Non-Optimized)
-
 # Use CMAKE_BUILD_TYPE as a starting point for lpmalgos_BUILD_TYPE
 if (NOT DEFINED lpmalgos_BUILD_TYPE)
   if (DEFINED CMAKE_BUILD_TYPE AND "${CMAKE_BUILD_TYPE}")
@@ -38,7 +36,6 @@ endif()
 option(lpmalgos_BUILD_WHEEL "Build a Python wheel after linking" OFF)
 
 if(MSVC)
-  add_definitions(/DPYTHON_RELEASE_IN_DEBUG)
   add_compile_options(-utf-8)
   add_compile_options(-bigobj)
 endif()
