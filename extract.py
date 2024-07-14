@@ -5,8 +5,8 @@ from os import mkdir, scandir
 from itertools import pairwise, product
 from cv2.typing import MatLike, Size
 from cv2 import (imread, imwrite, resize, Canny, cvtColor,
-  COLOR_BGR2GRAY, COLOR_GRAY2BGR, error, adaptiveThreshold,
-  ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, GaussianBlur)
+  GaussianBlur, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,
+  adaptiveThreshold, COLOR_BGR2GRAY, COLOR_GRAY2BGR)
 from lpmalgos import Ellipsoid, find_clusters
 from skeleton import skeletonize
 from shutil import rmtree
@@ -31,7 +31,8 @@ class imopen:
     self.entrie, self.index = entrie, None
 
   def __getitem__(self, index: int | slice):
-    self.index = index
+    if isinstance(index, (int, slice)):
+      self.index = index
     return self
 
   def __iter__(self):
@@ -43,11 +44,10 @@ class imopen:
         "tiff", "tif", "exr", "hdr", "pic")
       if not extension in valid:
         raise TypeError(f"{entrie!r} não é uma imagem!")
-      try: image = bgr2gray(imread(entrie))
-      except error: raise TypeError(
-        f"{entrie!r} não pôde ser aberto!") from None
+      if (image := imread(entrie)) is None:
+        raise TypeError(f"{entrie!r} não pôde ser aberto!")
       if isdir(name): rmtree(name)
-      return name, image
+      return name, bgr2gray(image)
 
     entrie, index = self.entrie, self.index
 
