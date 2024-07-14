@@ -4,9 +4,9 @@ from os.path import isfile, isdir, join
 from os import mkdir, scandir
 from itertools import pairwise, product
 from cv2.typing import MatLike, Size
-from cv2 import (cvtColor, imread, imwrite, resize, Canny,
-  GaussianBlur, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY,
-  adaptiveThreshold, COLOR_BGR2GRAY, COLOR_GRAY2BGR)
+from cv2 import (imread, imwrite, resize, Canny, cvtColor,
+  COLOR_BGR2GRAY, COLOR_GRAY2BGR, error, adaptiveThreshold,
+  ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, GaussianBlur)
 from lpmalgos import Ellipsoid, find_clusters
 from skeleton import skeletonize
 from shutil import rmtree
@@ -16,40 +16,56 @@ NDArray = NDArray[integer[Any] | floating[Any]]
 BLACK, WHITE, RED = 0, 255, (0, 0, 255)
 NDArrays = list[NDArray]
 
-def checkValidImageFormat(extension: str):
-  valid = ("bmp", "dib", "jpeg", "jpg", "jpe",
-    "jp2", "png", "pnm", "avif", "pbm", "pgm",
-    "ppm", "pxm", "webp", "pfm", "sr", "ras",
-    "tiff", "tif", "exr", "hdr", "pic")
-  if not extension in valid:
-    raise TypeError("Não é uma imagem!")
-
 def bgr2gray(entrie: MatLike):
   return cvtColor(entrie, COLOR_BGR2GRAY)
 
 def gray2bgr(entrie: MatLike):
   return cvtColor(entrie, COLOR_GRAY2BGR)
 
-def imopen(entrie: str, index: int | None = None):
-  def imopen_core(entrie: str):
-    name, ext = entrie.split(".")
-    checkValidImageFormat(ext)
-    if isdir(name): rmtree(name)
-    return name, bgr2gray(imread(entrie))
+class imopen:
+  __slots__ = ("entrie", "index")
 
-  if isfile(entrie):
-    yield imopen_core(entrie)
-    return
-  if isdir(entrie):
+  def __init__(self, entrie: str):
+    if not isdir(entrie) and not isfile(entrie):
+      raise FileNotFoundError(f"{entrie!r} não existe!")
+    self.entrie, self.index = entrie, None
+
+  def __getitem__(self, index: int | slice):
+    self.index = index
+    return self
+
+  def __iter__(self):
+    def imopen_core(entrie: str):
+      name, extension = entrie.split(".")
+      valid = ("bmp", "dib", "jpeg", "jpg", "jpe",
+        "jp2", "png", "pnm", "avif", "pbm", "pgm",
+        "ppm", "pxm", "webp", "pfm", "sr", "ras",
+        "tiff", "tif", "exr", "hdr", "pic")
+      if not extension in valid:
+        raise TypeError(f"{entrie!r} não é uma imagem!")
+      try: image = bgr2gray(imread(entrie))
+      except error: raise TypeError(
+        f"{entrie!r} não pôde ser aberto!") from None
+      if isdir(name): rmtree(name)
+      return name, image
+
+    entrie, index = self.entrie, self.index
+
+    if isfile(self.entrie):
+      yield imopen_core(entrie)
+      return
     if isinstance(index, int):
       files = [e for e in scandir(entrie) if e.is_file()]
       yield imopen_core(join(entrie, files[index].name))
+      return
+    if isinstance(index, slice):
+      yield from (imopen_core(join(entrie, e.name)) for e in
+        [e for e in scandir(entrie) if e.is_file()][index])
       return
     if index is None:
       yield from (imopen_core(join(entrie, e.name))
         for e in scandir(entrie) if e.is_file())
       return
-  raise FileNotFoundError(f"{entrie!r} não existe!")
 
 def cutImage(entrie: MatLike, shape: Size):
   if len(shape) != 2:
@@ -158,7 +174,7 @@ def differs(curves: NDArrays, basels: NDArrays, dname: str, const: float):
 
 if __name__ == "__main__":
   shape, const = (1800, 4590), (200 / 4590)
-  for name, opened in imopen("Imagens"):
+  for name, opened in imopen("Imagens")[:3]:
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
