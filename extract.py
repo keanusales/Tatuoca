@@ -50,8 +50,7 @@ class imopen:
       return name, bgr2gray(image)
 
     entrie, index = self.entrie, self.index
-
-    if isfile(self.entrie):
+    if isfile(entrie):
       yield imopen_core(entrie)
       return
     if isinstance(index, int):
