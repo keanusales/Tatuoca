@@ -1,8 +1,8 @@
 # distutils: define_macros = NPY_NO_DEPRECATED_API
-# distutils: extra_compile_args = /openmp:experimental
 # cython: binding = False, initializedcheck = False
 # cython: boundscheck = False, wraparound = False
 # cython: language_level = 3, cdivision = True
+# distutils: extra_compile_args = /openmp
 # distutils: language = c++
 
 from numpy cimport PyArray_Copy as copy
@@ -23,8 +23,8 @@ cdef unsigned check_threads() nogil:
 cdef uint8_t BLACK = 0, WHITE = 255
 
 cdef ndarray __skeletonize__(
-        ndarray[uint8_t, ndim = 2] entrie,
-        int distance):
+      ndarray[uint8_t, ndim = 2] entrie,
+      int distance):
   cdef ndarray entriecopy = copy(entrie)
   cdef uint8_t[:, :] entrieview = entriecopy
   cdef int rows = <int> entrieview.shape[0]

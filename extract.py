@@ -87,8 +87,8 @@ def cannyFilter(entrie: MatLike):
   print("cannyFilter terminado!")
   return output
 
-def DBScanSeparation(entrie: MatLike, quant = 2000):
-  def DBScanSeparation_core():
+def dbscanSeparation(entrie: MatLike, quant = 2000):
+  def dbscanSeparation_core():
     dim1, dim2 = (entrie == WHITE).nonzero()
     locs = zeros((len(dim1), 3), int)
     locs.T[0], locs.T[1] = dim2, dim1
@@ -99,8 +99,8 @@ def DBScanSeparation(entrie: MatLike, quant = 2000):
       if len(dim2) < quant: continue
       yield vstack((dim1, dim2)).T[dim2.argsort()]
 
-  output = [*DBScanSeparation_core()]
-  print("DBScanSeparation terminado!")
+  output = list(dbscanSeparation_core())
+  print("dbscanSeparation terminado!")
   return output
 
 def curveAdjust(D: NDArray, I: NDArray, n: int):
@@ -117,11 +117,9 @@ def curveAdjust(D: NDArray, I: NDArray, n: int):
     for i in range(n):
       y[i] = B[i] - (L[i] @ y)
     for i in reversed(range(n)):
-      x[i] = (y[i] - (U[i] @ x)) / U[i, i]
+      temp = y[i] - (U[i] @ x)
+      x[i] = temp / U[i, i]
     return (G @ x)
-
-def hasRepeated(entrie: NDArray):
-  return len(set(entrie)) != len(entrie)
 
 def lineSeparation(entrie: NDArrays):
   MIN, MAX = 550, 6
@@ -171,9 +169,48 @@ def differs(curves: NDArrays, basels: NDArrays, dname: str, const: float):
         for (e1, e2), value in zip(curve, values))
   print("differs terminado!")
 
+def components_with_t(base: float, mm_const: float, mm_diff: NDArray,
+                      q_comp: float, t_base: float, t_diff: float):
+  return (base + (mm_const * mm_diff) - (q_comp * (t_base - t_diff)))
+
+def components_wout_t(base: float, mm_const: float, mm_diff: NDArray):
+  return components_with_t(base, mm_const, mm_diff, 0, 0, 0)
+
+d_component = t_component = components_wout_t
+h_component = z_component = components_with_t
+
+def differs_new(curves: NDArrays, basels: NDArrays, px_to_mm: float):
+  (h, d, z) = curves
+  def differs_core():
+    for basel in basels:
+      meanbase = basel.T[0].mean().round().astype(int)
+      diff_h_mm = ((meanbase - h.T[0]) * px_to_mm)
+      diff_d_mm = ((meanbase - d.T[0]) * px_to_mm)
+      diff_z_mm = ((meanbase - z.T[0]) * px_to_mm)
+      yield (diff_h_mm, diff_d_mm, diff_z_mm)
+  ret = zip(*differs_core())
+  print("differs terminado!")
+  return ret
+
+Sequence = tuple[NDArray, ...]
+def h_comp_calc(diffs_h: Sequence, h_base: float, h_const: float, hq_comp: float, t_comp: float, dir: str):
+  for b, diff_h in enumerate(diffs_h):
+    with open(fr"{dir}/diffs/h{b}.txt", "w") as output:
+      output.writelines(map(str, h_component(h_base, h_const, diff_h, hq_comp, t_comp)))
+
+def d_comp_calc(diffs_d: Sequence, d_base: float, d_const: float, dir: str):
+  for b, diff_d in enumerate(diffs_d):
+    with open(fr"{dir}/diffs/d{b}.txt", "w") as output:
+      output.writelines(map(str, d_component(d_base, d_const, diff_d)))
+
+def z_comp_calc(diffs_z: Sequence, z_base: float, z_const: float, zq_comp: float, t_comp: float, dir: str):
+  for b, diff_z in enumerate(diffs_z):
+    with open(fr"{dir}/diffs/z{b}.txt", "w") as output:
+      output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
+
 if __name__ == "__main__":
   shape, const = (1800, 4590), (200 / 4590)
-  for name, opened in imopen("Imagens")[:3]:
+  for name, opened in imopen("Imagens"):
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
@@ -187,7 +224,7 @@ if __name__ == "__main__":
     skeleton = skeletonize(canny, 15)
     imwrite(f"{name}/skeleton.png", skeleton)
 
-    separed = DBScanSeparation(skeleton)
+    separed = dbscanSeparation(skeleton)
     curves, basels = lineSeparation(separed)
 
     saveLines(curves, name, "curve", shape)
