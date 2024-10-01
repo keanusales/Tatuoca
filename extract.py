@@ -208,7 +208,7 @@ def z_comp_calc(diffs_z: Sequence, z_base: float, z_const: float, zq_comp: float
     with open(fr"{dir}/diffs/z{b}.txt", "w") as output:
       output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
 
-if __name__ == "__main__":
+def main():
   shape, const = (1800, 4590), (200 / 4590)
   for name, opened in imopen("Imagens"):
     print(f"Imagem atual: {name}")
@@ -238,3 +238,5 @@ if __name__ == "__main__":
     print("\n----------------------\n")
 
   print("Processo Terminado!")
+
+if __name__ == "__main__": main()
