@@ -5,12 +5,14 @@
 # distutils: extra_compile_args = /openmp
 # distutils: language = c++
 
+from numpy cimport ndarray, import_array
 from numpy cimport PyArray_Copy as copy
-from numpy cimport ndarray, uint8_t
 from cython.parallel import prange
-from numpy cimport import_array
 
 import_array()
+
+ctypedef unsigned char uint8
+ctypedef long long int64
 
 cdef extern from "<thread>" namespace "std::thread" nogil:
   unsigned hardware_concurrency() noexcept
@@ -20,17 +22,18 @@ cdef unsigned check_threads() nogil:
   if not threads: return 1
   return threads
 
-cdef uint8_t BLACK = 0, WHITE = 255
+cdef uint8 BLACK = 0
+cdef uint8 WHITE = 255
 
 cdef ndarray __skeletonize__(
-      ndarray[uint8_t, ndim = 2] entrie,
-      int distance):
+      ndarray[uint8, ndim = 2] entrie,
+      int64 distance):
   cdef ndarray entriecopy = copy(entrie)
-  cdef uint8_t[:, :] entrieview = entriecopy
-  cdef int rows = <int> entrieview.shape[0]
-  cdef int cols = <int> entrieview.shape[1]
-  cdef int maxd = rows - distance
-  cdef int lin1, lin2, col, pos1, pos2, pos
+  cdef uint8[:, :] entrieview = entriecopy
+  cdef int64 rows = entrieview.shape[0]
+  cdef int64 cols = entrieview.shape[1]
+  cdef int64 maxd = rows - distance
+  cdef int64 lin1, lin2, col, pos1, pos2, pos
   cdef bint white_detect
 
   cdef unsigned threads = check_threads()
@@ -57,5 +60,5 @@ cdef ndarray __skeletonize__(
 
   return entriecopy
 
-def skeletonize(ndarray entrie, int distance):
+def skeletonize(ndarray entrie, int64 distance):
   return __skeletonize__(entrie, distance)

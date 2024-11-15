@@ -1,6 +1,6 @@
 from numpy.typing import NDArray
 from numpy import zeros, vstack, errstate, integer, floating
-from os.path import isfile, isdir, join
+from os.path import isfile, isdir, join, splitext
 from os import mkdir, scandir
 from itertools import pairwise, product
 from cv2.typing import MatLike, Size
@@ -37,11 +37,11 @@ class imopen:
 
   def __iter__(self):
     def imopen_core(entrie: str):
-      name, extension = entrie.split(".")
-      valid = ("bmp", "dib", "jpeg", "jpg", "jpe",
-        "jp2", "png", "pnm", "avif", "pbm", "pgm",
-        "ppm", "pxm", "webp", "pfm", "sr", "ras",
-        "tiff", "tif", "exr", "hdr", "pic")
+      name, extension = splitext(entrie)
+      valid = (".bmp", ".dib", ".jpeg", ".jpg", ".jpe",
+        ".jp2", ".png", ".pnm", ".avif", ".pbm", ".pgm",
+        ".ppm", ".pxm", ".webp", ".pfm", ".sr", ".ras",
+        ".tiff", ".tif", ".exr", ".hdr", ".pic")
       if not extension in valid:
         raise TypeError(f"{entrie!r} não é uma imagem!")
       if (image := imread(entrie)) is None:
