@@ -1,0 +1,6 @@
+[submodule "sources/lpmalgos/vendor/pybind11"]
+	path = sources/lpmalgos/vendor/pybind11
+	url = https://github.com/pybind/pybind11.git
+[submodule "sources/lpmalgos/vendor/nanoflann"]
+	path = sources/lpmalgos/vendor/nanoflann
+	url = https://github.com/jlblancoc/nanoflann.git
