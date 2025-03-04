@@ -26,7 +26,10 @@ Utilizando técnicas avançadas de processamento de imagens e análise de dados,
   - Atualização do pacote redistribuível do C++.
 - Após isso, baixe o Visual Studio Code disponível pelo site https://code.visualstudio.com/download.
 - Baixe a extensão compiladora https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools.
-- Baixe a extensão do C e C++ https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools.
 - A partir do repositório clonado, abra a pasta /sources/lpmalgos no VSCode. Isso irá carregar o compilador do Cmake.
 - Abra a aba de configurações do Cmake no VSCode. Na parte de configurar, altere o kit de compilação para o equivalente à arquitetura do python instalado no seu pc.
-- Compile a extensão 
+- Compile a extensão e a recorte da pasta /sources/lpmalgos/build/bin/release para a pasta /lpmalgos.
+- Agora, abra a pasta /sources/skeleton no VSCode e abra um terminal apertando ctrl + shift + '.
+- Execute o comando "easycython.exe .\skeleton.pyx" no seu terminal. Isso irá compilar a extensão.
+- Recorte a extensão compilada da pasta /sources/skeleton para a pasta /skeleton.
+- Pronto! Agora podemos usar o código do Tatuoca!
