@@ -1,3 +1,4 @@
-vendor/
+vendor/nanoflann/
+vendor/pybind11/
 Eigen/
 .vscode/
