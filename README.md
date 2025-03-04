@@ -13,7 +13,7 @@ Utilizando técnicas avançadas de processamento de imagens e análise de dados,
 
 # Instalação, Compilação e Uso (Windows)
 
-- Clone esse repositório no seu pc.
+- Clone esse repositório no seu pc através do comando "git clone --recursive-submodules https://github.com/keanusales/Tatuoca.git".
 - Baixe e instale a versão mais recente do python pelo site https://www.python.org/downloads/.
 - Preste bastante atenção à arquitetura usada na compilação do python, pois ela será útil posteriormente.
 - Assegure-se que você também baixou os debug binaries e os dubugging symbols, necessários para compilar extensões ao python.
