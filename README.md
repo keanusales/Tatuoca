@@ -20,10 +20,10 @@ Utilizando técnicas avançadas de processamento de imagens e análise de dados,
 - Pelo pip, execute o comando "pip install opencv cython easycython" para instalar as dependências necessárias.
 - Baixe e instale as ferramentas de compilação do MSVC pelo link https://visualstudio.microsoft.com/pt-br/visual-cpp-build-tools/.
 - Assegure-se de que apenas os componentes individuais a seguir estão instalados:
--- SDK mais recente do Windows, seja Windows 10 ou 11, a depender de qual está instalado no seu pc.
--- Ferramentas do Cmake do C++ para Windows.
--- Ferramentas de compilação MSVC mais recente para sua arquitetura (geralmente a opção anterior já marca essa automaticamente).
--- Atualização do pacote redistribuível do C++.
+  - SDK mais recente do Windows, seja Windows 10 ou 11, a depender de qual está instalado no seu pc.
+  - Ferramentas do Cmake do C++ para Windows.
+  - Ferramentas de compilação MSVC mais recente para sua arquitetura (geralmente a opção anterior já marca essa automaticamente).
+  - Atualização do pacote redistribuível do C++.
 - Após isso, baixe o Visual Studio Code disponível pelo site https://code.visualstudio.com/download.
 - Baixe a extensão compiladora https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools.
 - Baixe a extensão do C e C++ https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools.
