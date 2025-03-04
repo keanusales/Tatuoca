@@ -103,11 +103,11 @@ class ImageOpener:
       yield open_image_core(join(path, files[index].name))
       return
     if isinstance(index, slice):
-      iter(open_image_core(join(path, e.name)) for e in
+      yield from (open_image_core(join(path, e.name)) for e in
         [e for e in scandir(path) if e.is_file()][index])
       return
     if index is None:
-      iter(open_image_core(join(path, e.name))
+      yield from (open_image_core(join(path, e.name))
         for e in scandir(path) if e.is_file())
       return
 
@@ -161,7 +161,7 @@ def canny_filter(image: MatLike) -> MatLike:
   Returns:
     MatLike: Imagem filtrada.
   """
-  output = Canny(image, 200, 255, L2gradient=True)
+  output = Canny(image, 200, 255, L2gradient = True)
   print("canny_filter terminado!")
   return output
 
@@ -204,7 +204,7 @@ def curve_adjust(D: NDArray, I: NDArray, degree: int) -> NDArray:
     NDArray: Curva ajustada.
   """
   D, I = D.astype(float), I.astype(float)
-  with errstate(all="raise"):
+  with errstate(all = "raise"):
     G = D.reshape(-1, 1) ** range(degree)
     A, B = (G.T @ G), (G.T @ I)
     L, U = zeros((degree, degree)), A
