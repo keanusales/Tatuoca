@@ -196,8 +196,8 @@ def curve_adjust(D: NDArray, I: NDArray, degree: int) -> NDArray:
   Ajusta curvas usando um polinômio de grau n.
 
   Args:
-    D (NDArray): Dados de entrada.
-    I (NDArray): Valores de saída.
+    D (NDArray): Domínio dos valores de entrada.
+    I (NDArray): Imagem dos valores de entrada.
     degree (int): Grau do polinômio.
 
   Returns:
