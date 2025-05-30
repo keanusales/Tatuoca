@@ -290,7 +290,7 @@ def overlay_lines(image: MatLike, lines: NDArrays) -> MatLike:
   print("overlay_lines terminado!")
   return output
 
-def calculate_differences(curves: NDArrays, baselines: NDArrays, directory: str, const: float):
+def calculate_differences(curves: NDArrays, baselines: NDArrays, directory: str, px_to_mm: float):
   """
   Calcula diferenças entre curvas e bases.
 
@@ -298,14 +298,14 @@ def calculate_differences(curves: NDArrays, baselines: NDArrays, directory: str,
     curves (NDArrays): Lista de curvas.
     baselines (NDArrays): Lista de bases.
     directory (str): Diretório para salvar os arquivos.
-    const (float): Constante de conversão.
+    px_to_mm (float): Constante de conversão.
   """
   differences_dir = f"{directory}/diffs"
   if not isdir(differences_dir): mkdir(differences_dir)
   curves_and_baselines = product(enumerate(curves), enumerate(baselines))
   for (curve_index, curve), (baseline_index, baseline) in curves_and_baselines:
     mean = baseline.T[0].mean(None, int)
-    values = (mean - curve.T[0]) * const
+    values = (mean - curve.T[0]) * px_to_mm
     with open(fr"{differences_dir}\\curve{curve_index}base{baseline_index}.txt", "w") as output:
       output.writelines(f"({e1}, {mean}), {e2} - {value}\n" for (e1, e2), value in zip(curve, values))
   print("calculate_differences terminado!")
@@ -420,11 +420,27 @@ def calculate_z_components(diffs_z: Sequence, z_base: float, z_const: float,
     with open(fr"{directory}/diffs/z{index}.txt", "w") as output:
       output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
 
+def magnetogram_image_scale(scale: int):
+  """
+  Calcula o tamanho da imagem e o fator de escala.
+  Args:
+    scale (int): Fator de escala para a imagem.
+  Returns:
+    tuple: Tamanho da imagem (linhas, colunas) e fator de escala.
+  """
+  if not isinstance(scale, int) or scale <= 0:
+    raise TypeError("scale deve ser um inteiro positivo!")
+  # O magnetograma tem 200x510 mm
+  lines = 200 * scale
+  columns = 510 * scale
+  px_to_mm = 1 / scale
+  return (lines, columns), px_to_mm
+
 def main():
   """
   Função principal para processar as imagens.
   """
-  shape, const = (1800, 4590), (200 / 4590)
+  shape, px_to_mm = magnetogram_image_scale(10)
   for name, opened in ImageOpener("Imagens"):
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
@@ -444,7 +460,7 @@ def main():
 
     save_lines(curves, name, "curve", shape)
     save_lines(baselines, name, "basel", shape)
-    calculate_differences(curves, baselines, name, const)
+    calculate_differences(curves, baselines, name, px_to_mm)
 
     dbscan1 = overlay_lines(skeleton_image, curves)
     dbscan2 = overlay_lines(canny_image, curves)
