@@ -1,8 +1,6 @@
-from numpy.typing import NDArray
-from numpy import integer
-from typing import Any
+from numpy import ndarray, dtype, integer
 
 def skeletonize(
-  entrie: NDArray[integer[Any]],
+  entrie: ndarray[tuple[int, int], dtype[integer]],
   distance: int
-) -> NDArray[integer[Any]]: ...
+) -> ndarray[tuple[int, int], dtype[integer]]: ...

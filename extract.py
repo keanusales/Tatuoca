@@ -1,5 +1,5 @@
-from numpy.typing import NDArray
-from numpy import zeros, vstack, errstate, integer, floating
+from numpy import (ndarray, dtype, int64,
+  float64, zeros, vstack, errstate, arange)
 from os.path import isfile, isdir, join, splitext
 from os import mkdir, scandir
 from itertools import pairwise, product
@@ -10,10 +10,9 @@ from cv2 import (imread, imwrite, resize, Canny, cvtColor,
 from lpmalgos import Ellipsoid, find_clusters
 from skeleton import skeletonize
 from shutil import rmtree
-from typing import Any
 
-NDArray = NDArray[integer[Any] | floating[Any]]
-BLACK, WHITE, RED = 0, 255, (0, 0, 255)
+NDArray = ndarray[tuple[int, int], dtype[int64 | float64]]
+BLACK, WHITE, RED, GREEN = 0, 255, (0, 0, 255), (0, 255, 0)
 NDArrays = list[NDArray]
 
 def bgr2gray(image: MatLike) -> MatLike:
@@ -267,8 +266,8 @@ def save_lines(lines: NDArrays, directory: str, dtype: str, shape: Size):
   for i, subarray in enumerate(lines):
     image, (dim1, dim2) = black_image.copy(), subarray.T
     image[dim1, dim2] = WHITE
-    imwrite(fr"{lines_dir}\\{dtype}{i}.png", image)
-    with open(fr"{lines_dir}\\{dtype}{i}.txt", "w") as output:
+    imwrite(fr"{lines_dir}\{dtype}{i}.png", image)
+    with open(fr"{lines_dir}\{dtype}{i}.txt", "w") as output:
       output.write(f"Tamanho da imagem: {shape}\n")
       output.writelines(f"{elem}\n" for elem in subarray)
   print("save_lines terminado!")
@@ -306,119 +305,148 @@ def calculate_differences(curves: NDArrays, baselines: NDArrays, directory: str,
   for (curve_index, curve), (baseline_index, baseline) in curves_and_baselines:
     mean = baseline.T[0].mean(None, int)
     values = (mean - curve.T[0]) * px_to_mm
-    with open(fr"{differences_dir}\\curve{curve_index}base{baseline_index}.txt", "w") as output:
+    with open(fr"{differences_dir}\curve{curve_index}base{baseline_index}.txt", "w") as output:
       output.writelines(f"({e1}, {mean}), {e2} - {value}\n" for (e1, e2), value in zip(curve, values))
   print("calculate_differences terminado!")
 
-def components_with_t(base: float, mm_const: float, mm_diff: NDArray,
-                      q_comp: float, t_base: float, t_diff: float) -> NDArray:
+def get_30min_values(image: MatLike, curves: NDArrays,
+                     baselines: NDArrays, directory: str, px_to_mm: float):
   """
-  Calcula componentes com t.
-
-  Args:
-    base (float): Valor base.
-    mm_const (float): Constante de conversão.
-    mm_diff (NDArray): Diferença em milímetros.
-    q_comp (float): Componente q.
-    t_base (float): Valor base de t.
-    t_diff (float): Diferença de t.
-
-  Returns:
-    NDArray: Componentes calculados.
-  """
-  return (base + (mm_const * mm_diff) - (q_comp * (t_base - t_diff)))
-
-def components_without_t(base: float, mm_const: float, mm_diff: NDArray) -> NDArray:
-  """
-  Calcula componentes sem t.
-
-  Args:
-    base (float): Valor base.
-    mm_const (float): Constante de conversão.
-    mm_diff (NDArray): Diferença em milímetros.
-
-  Returns:
-    NDArray: Componentes calculados.
-  """
-  return components_with_t(base, mm_const, mm_diff, 0, 0, 0)
-
-d_component = t_component = components_without_t
-h_component = z_component = components_with_t
-
-def calculate_new_differences(curves: NDArrays, baselines: NDArrays,
-    px_to_mm: float) -> tuple[NDArray, NDArray, NDArray]:
-  """
-  Calcula novas diferenças entre curvas e bases.
+  Obtém valores de 30 minutos.
 
   Args:
     curves (NDArrays): Lista de curvas.
     baselines (NDArrays): Lista de bases.
-    px_to_mm (float): Conversão de pixels para milímetros.
+    directory (str): Diretório para salvar os arquivos.
+    px_to_mm (float): Constante de conversão.
 
   Returns:
-    tuple[NDArray, NDArray, NDArray]: Diferenças calculadas.
+    tuple: Valores h, d, z de 30 em 30 minutos.
   """
-  h_curve, d_curve, z_curve = curves
-  def calculate_core():
-    for baseline in baselines:
-      mean_base = baseline.T[0].mean().round().astype(int)
-      diff_h_mm = ((mean_base - h_curve.T[0]) * px_to_mm)
-      diff_d_mm = ((mean_base - d_curve.T[0]) * px_to_mm)
-      diff_z_mm = ((mean_base - z_curve.T[0]) * px_to_mm)
-      yield (diff_h_mm, diff_d_mm, diff_z_mm)
-  result = zip(*calculate_core())
-  print("calculate_new_differences terminado!")
-  return result
+  output = gray2bgr(image)
+  dir_30min = f"{directory}/30min"
+  if not isdir(dir_30min): mkdir(dir_30min)
+  for i, (curve, baseline) in enumerate(product(curves, baselines)):
+    ybase, xbase = baseline.T
+    ymean = ybase.mean().round().astype(int)
+    xpass = (xbase[-1] - xbase[0]) / 48
+    xvalues = ((arange(49) * xpass) + xbase[0]).round().astype(int)
+    yvalues = (ymean - curve[(curve[:, 1, None] == xvalues).any(1), 0]) * px_to_mm
+    with open(fr"{dir_30min}/30min{i}.txt", "w") as outfile:
+      outfile.writelines(f"{yvalue}, {xvalue}\n" for yvalue, xvalue in zip(yvalues, xvalues))
+    output[:, xvalues] = GREEN
+  print("get_30min_values terminado!")
+  return output
 
-Sequence = tuple[NDArray, ...]
+# def components_with_t(base: float, mm_const: float, mm_diff: NDArray,
+#                       q_comp: float, t_base: float, t_diff: float) -> NDArray:
+#   """
+#   Calcula componentes com t.
 
-def calculate_h_components(diffs_h: Sequence, h_base: float, h_const: float,
-    hq_comp: float, t_comp: float, directory: str):
-  """
-  Calcula componentes h.
+#   Args:
+#     base (float): Valor base.
+#     mm_const (float): Constante de conversão.
+#     mm_diff (NDArray): Diferença em milímetros.
+#     q_comp (float): Componente q.
+#     t_base (float): Valor base de t.
+#     t_diff (float): Diferença de t.
 
-  Args:
-    diffs_h (Sequence): Diferenças h.
-    h_base (float): Valor base de h.
-    h_const (float): Constante de h.
-    hq_comp (float): Componente q de h.
-    t_comp (float): Componente t.
-    directory (str): Diretório para salvar os arquivos.
-  """
-  for index, diff_h in enumerate(diffs_h):
-    with open(fr"{directory}/diffs/h{index}.txt", "w") as output:
-      output.writelines(map(str, h_component(h_base, h_const, diff_h, hq_comp, t_comp)))
+#   Returns:
+#     NDArray: Componentes calculados.
+#   """
+#   return (base + (mm_const * mm_diff) - (q_comp * (t_base - t_diff)))
 
-def calculate_d_components(diffs_d: Sequence, d_base: float, d_const: float, directory: str):
-    """
-    Calcula componentes d.
+# def components_without_t(base: float, mm_const: float, mm_diff: NDArray) -> NDArray:
+#   """
+#   Calcula componentes sem t.
 
-    Args:
-      diffs_d (Sequence): Diferenças d.
-      d_base (float): Valor base de d.
-      d_const (float): Constante de d.
-      directory (str): Diretório para salvar os arquivos.
-    """
-    for index, diff_d in enumerate(diffs_d):
-      with open(fr"{directory}/diffs/d{index}.txt", "w") as output:
-        output.writelines(map(str, d_component(d_base, d_const, diff_d)))
+#   Args:
+#     base (float): Valor base.
+#     mm_const (float): Constante de conversão.
+#     mm_diff (NDArray): Diferença em milímetros.
 
-def calculate_z_components(diffs_z: Sequence, z_base: float, z_const: float,
-      zq_comp: float, t_comp: float, directory: str):
-  """
-  Calcula componentes z.
+#   Returns:
+#     NDArray: Componentes calculados.
+#   """
+#   return components_with_t(base, mm_const, mm_diff, 0, 0, 0)
 
-  Args:
-    diffs_z (Sequence): Diferenças z.
-    z_base (float): Valor base de z.
-    z_const (float): Constante de z.
-    zq_comp (float): Componente q de z.
-    t_comp (float): Componente t.
-    directory (str): Diretório para salvar os arquivos.
-  """
-  for index, diff_z in enumerate(diffs_z):
-    with open(fr"{directory}/diffs/z{index}.txt", "w") as output:
-      output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
+# d_component = t_component = components_without_t
+# h_component = z_component = components_with_t
+
+# def calculate_new_differences(curves: NDArrays, baselines: NDArrays,
+#     px_to_mm: float) -> tuple[NDArray, NDArray, NDArray]:
+#   """
+#   Calcula novas diferenças entre curvas e bases.
+
+#   Args:
+#     curves (NDArrays): Lista de curvas.
+#     baselines (NDArrays): Lista de bases.
+#     px_to_mm (float): Conversão de pixels para milímetros.
+
+#   Returns:
+#     tuple[NDArray, NDArray, NDArray]: Diferenças calculadas.
+#   """
+#   h_curve, d_curve, z_curve = curves
+#   def calculate_core():
+#     for baseline in baselines:
+#       mean_base = baseline.T[0].mean().round().astype(int)
+#       diff_h_mm = ((mean_base - h_curve.T[0]) * px_to_mm)
+#       diff_d_mm = ((mean_base - d_curve.T[0]) * px_to_mm)
+#       diff_z_mm = ((mean_base - z_curve.T[0]) * px_to_mm)
+#       yield (diff_h_mm, diff_d_mm, diff_z_mm)
+#   result = zip(*calculate_core())
+#   print("calculate_new_differences terminado!")
+#   return result
+
+# Sequence = tuple[NDArray, ...]
+
+# def calculate_h_components(diffs_h: Sequence, h_base: float, h_const: float,
+#     hq_comp: float, t_comp: float, directory: str):
+#   """
+#   Calcula componentes h.
+
+#   Args:
+#     diffs_h (Sequence): Diferenças h.
+#     h_base (float): Valor base de h.
+#     h_const (float): Constante de h.
+#     hq_comp (float): Componente q de h.
+#     t_comp (float): Componente t.
+#     directory (str): Diretório para salvar os arquivos.
+#   """
+#   for index, diff_h in enumerate(diffs_h):
+#     with open(fr"{directory}/diffs/h{index}.txt", "w") as output:
+#       output.writelines(map(str, h_component(h_base, h_const, diff_h, hq_comp, t_comp)))
+
+# def calculate_d_components(diffs_d: Sequence, d_base: float, d_const: float, directory: str):
+#     """
+#     Calcula componentes d.
+
+#     Args:
+#       diffs_d (Sequence): Diferenças d.
+#       d_base (float): Valor base de d.
+#       d_const (float): Constante de d.
+#       directory (str): Diretório para salvar os arquivos.
+#     """
+#     for index, diff_d in enumerate(diffs_d):
+#       with open(fr"{directory}/diffs/d{index}.txt", "w") as output:
+#         output.writelines(map(str, d_component(d_base, d_const, diff_d)))
+
+# def calculate_z_components(diffs_z: Sequence, z_base: float, z_const: float,
+#       zq_comp: float, t_comp: float, directory: str):
+#   """
+#   Calcula componentes z.
+
+#   Args:
+#     diffs_z (Sequence): Diferenças z.
+#     z_base (float): Valor base de z.
+#     z_const (float): Constante de z.
+#     zq_comp (float): Componente q de z.
+#     t_comp (float): Componente t.
+#     directory (str): Diretório para salvar os arquivos.
+#   """
+#   for index, diff_z in enumerate(diffs_z):
+#     with open(fr"{directory}/diffs/z{index}.txt", "w") as output:
+#       output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
 
 def magnetogram_image_scale(scale: int):
   """
@@ -441,7 +469,7 @@ def main():
   Função principal para processar as imagens.
   """
   shape, px_to_mm = magnetogram_image_scale(10)
-  for name, opened in ImageOpener("Imagens"):
+  for name, opened in ImageOpener("Imagens2")[:1]:
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
@@ -461,6 +489,9 @@ def main():
     save_lines(curves, name, "curve", shape)
     save_lines(baselines, name, "basel", shape)
     calculate_differences(curves, baselines, name, px_to_mm)
+
+    _30min = get_30min_values(canny_image, curves, baselines, name, px_to_mm)
+    imwrite(f"{name}/30min.png", _30min)
 
     dbscan1 = overlay_lines(skeleton_image, curves)
     dbscan2 = overlay_lines(canny_image, curves)
