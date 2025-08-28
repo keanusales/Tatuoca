@@ -304,7 +304,7 @@ def calculate_differences(curves: NDArrays, baselines: NDArrays, directory: str,
   curves_and_baselines = product(enumerate(curves), enumerate(baselines))
   for (curve_index, curve), (baseline_index, baseline) in curves_and_baselines:
     mean = baseline.T[0].mean(None, int)
-    values = (mean - curve.T[0]) * px_to_mm
+    values = ((mean - curve.T[0]) * px_to_mm).round(1)
     with open(fr"{differences_dir}\curve{curve_index}base{baseline_index}.txt", "w") as output:
       output.writelines(f"({e1}, {mean}), {e2} - {value}\n" for (e1, e2), value in zip(curve, values))
   print("calculate_differences terminado!")
@@ -328,12 +328,13 @@ def get_30min_values(image: MatLike, curves: NDArrays,
   if not isdir(dir_30min): mkdir(dir_30min)
   for i, (curve, baseline) in enumerate(product(curves, baselines)):
     ybase, xbase = baseline.T
-    ymean = ybase.mean().round().astype(int)
+    ymean = ybase.mean().round().astype(int64)
     xpass = (xbase[-1] - xbase[0]) / 48
-    xvalues = ((arange(49) * xpass) + xbase[0]).round().astype(int)
-    yvalues = (ymean - curve[(curve[:, 1, None] == xvalues).any(1), 0]) * px_to_mm
+    xvalues = ((arange(49) * xpass) + xbase[0]).round().astype(int64)
+    indexes = (curve[:, 1, None] == xvalues).any(1)
+    yvalues = ((ymean - curve[indexes, 0]) * px_to_mm).round(1)
     with open(fr"{dir_30min}/30min{i}.txt", "w") as outfile:
-      outfile.writelines(f"{yvalue}, {xvalue}\n" for yvalue, xvalue in zip(yvalues, xvalues))
+      outfile.writelines(f"{xvalue}, {yvalue}\n" for xvalue, yvalue in zip(xvalues, yvalues))
     output[:, xvalues] = GREEN
   print("get_30min_values terminado!")
   return output
@@ -389,7 +390,7 @@ def get_30min_values(image: MatLike, curves: NDArrays,
 #   h_curve, d_curve, z_curve = curves
 #   def calculate_core():
 #     for baseline in baselines:
-#       mean_base = baseline.T[0].mean().round().astype(int)
+#       mean_base = baseline.T[0].mean().round().astype(int64)
 #       diff_h_mm = ((mean_base - h_curve.T[0]) * px_to_mm)
 #       diff_d_mm = ((mean_base - d_curve.T[0]) * px_to_mm)
 #       diff_z_mm = ((mean_base - z_curve.T[0]) * px_to_mm)
@@ -469,7 +470,7 @@ def main():
   Função principal para processar as imagens.
   """
   shape, px_to_mm = magnetogram_image_scale(10)
-  for name, opened in ImageOpener("Imagens2")[:1]:
+  for name, opened in ImageOpener("Imagens2"):
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
