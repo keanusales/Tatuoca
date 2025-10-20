@@ -360,7 +360,7 @@ def main():
   Função principal para processar as imagens.
   """
   shape, px_to_mm = magnetogram_image_scale(10)
-  for name, opened in ImageOpener("Imagens")[67]:
+  for name, opened in ImageOpener("Imagens"):
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
