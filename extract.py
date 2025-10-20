@@ -88,7 +88,7 @@ class ImageOpener:
         ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic")
       if extension not in valid_extensions:
         raise TypeError(f"{path!r} não é uma imagem!")
-      if (image := imread(path)) is None:
+      if image := imread(path) is None:
         raise TypeError(f"{path!r} não pôde ser aberto!")
       if isdir(name): rmtree(name)
       return name, bgr2gray(image)
@@ -339,116 +339,6 @@ def get_30min_values(image: MatLike, curves: NDArrays,
   print("get_30min_values terminado!")
   return output
 
-# def components_with_t(base: float, mm_const: float, mm_diff: NDArray,
-#                       q_comp: float, t_base: float, t_diff: float) -> NDArray:
-#   """
-#   Calcula componentes com t.
-
-#   Args:
-#     base (float): Valor base.
-#     mm_const (float): Constante de conversão.
-#     mm_diff (NDArray): Diferença em milímetros.
-#     q_comp (float): Componente q.
-#     t_base (float): Valor base de t.
-#     t_diff (float): Diferença de t.
-
-#   Returns:
-#     NDArray: Componentes calculados.
-#   """
-#   return (base + (mm_const * mm_diff) - (q_comp * (t_base - t_diff)))
-
-# def components_without_t(base: float, mm_const: float, mm_diff: NDArray) -> NDArray:
-#   """
-#   Calcula componentes sem t.
-
-#   Args:
-#     base (float): Valor base.
-#     mm_const (float): Constante de conversão.
-#     mm_diff (NDArray): Diferença em milímetros.
-
-#   Returns:
-#     NDArray: Componentes calculados.
-#   """
-#   return components_with_t(base, mm_const, mm_diff, 0, 0, 0)
-
-# d_component = t_component = components_without_t
-# h_component = z_component = components_with_t
-
-# def calculate_new_differences(curves: NDArrays, baselines: NDArrays,
-#     px_to_mm: float) -> tuple[NDArray, NDArray, NDArray]:
-#   """
-#   Calcula novas diferenças entre curvas e bases.
-
-#   Args:
-#     curves (NDArrays): Lista de curvas.
-#     baselines (NDArrays): Lista de bases.
-#     px_to_mm (float): Conversão de pixels para milímetros.
-
-#   Returns:
-#     tuple[NDArray, NDArray, NDArray]: Diferenças calculadas.
-#   """
-#   h_curve, d_curve, z_curve = curves
-#   def calculate_core():
-#     for baseline in baselines:
-#       mean_base = baseline.T[0].mean().round().astype(int64)
-#       diff_h_mm = ((mean_base - h_curve.T[0]) * px_to_mm)
-#       diff_d_mm = ((mean_base - d_curve.T[0]) * px_to_mm)
-#       diff_z_mm = ((mean_base - z_curve.T[0]) * px_to_mm)
-#       yield (diff_h_mm, diff_d_mm, diff_z_mm)
-#   result = zip(*calculate_core())
-#   print("calculate_new_differences terminado!")
-#   return result
-
-# Sequence = tuple[NDArray, ...]
-
-# def calculate_h_components(diffs_h: Sequence, h_base: float, h_const: float,
-#     hq_comp: float, t_comp: float, directory: str):
-#   """
-#   Calcula componentes h.
-
-#   Args:
-#     diffs_h (Sequence): Diferenças h.
-#     h_base (float): Valor base de h.
-#     h_const (float): Constante de h.
-#     hq_comp (float): Componente q de h.
-#     t_comp (float): Componente t.
-#     directory (str): Diretório para salvar os arquivos.
-#   """
-#   for index, diff_h in enumerate(diffs_h):
-#     with open(fr"{directory}/diffs/h{index}.txt", "w") as output:
-#       output.writelines(map(str, h_component(h_base, h_const, diff_h, hq_comp, t_comp)))
-
-# def calculate_d_components(diffs_d: Sequence, d_base: float, d_const: float, directory: str):
-#     """
-#     Calcula componentes d.
-
-#     Args:
-#       diffs_d (Sequence): Diferenças d.
-#       d_base (float): Valor base de d.
-#       d_const (float): Constante de d.
-#       directory (str): Diretório para salvar os arquivos.
-#     """
-#     for index, diff_d in enumerate(diffs_d):
-#       with open(fr"{directory}/diffs/d{index}.txt", "w") as output:
-#         output.writelines(map(str, d_component(d_base, d_const, diff_d)))
-
-# def calculate_z_components(diffs_z: Sequence, z_base: float, z_const: float,
-#       zq_comp: float, t_comp: float, directory: str):
-#   """
-#   Calcula componentes z.
-
-#   Args:
-#     diffs_z (Sequence): Diferenças z.
-#     z_base (float): Valor base de z.
-#     z_const (float): Constante de z.
-#     zq_comp (float): Componente q de z.
-#     t_comp (float): Componente t.
-#     directory (str): Diretório para salvar os arquivos.
-#   """
-#   for index, diff_z in enumerate(diffs_z):
-#     with open(fr"{directory}/diffs/z{index}.txt", "w") as output:
-#       output.writelines(map(str, z_component(z_base, z_const, diff_z, zq_comp, t_comp)))
-
 def magnetogram_image_scale(scale: int):
   """
   Calcula o tamanho da imagem e o fator de escala.
@@ -470,7 +360,7 @@ def main():
   Função principal para processar as imagens.
   """
   shape, px_to_mm = magnetogram_image_scale(10)
-  for name, opened in ImageOpener("Imagens2"):
+  for name, opened in ImageOpener("Imagens")[67]:
     print(f"Imagem atual: {name}")
     if not isdir(name): mkdir(name)
 
@@ -478,11 +368,16 @@ def main():
     imwrite(f"{name}/cutted.png", cropped_image)
     gauss_image = gauss_process(cropped_image)
     imwrite(f"{name}/gauss.png", gauss_image)
+
     canny_image = canny_filter(gauss_image)
+    white_canny_image = 255 - canny_image
     imwrite(f"{name}/canny.png", canny_image)
+    imwrite(f"{name}/white_canny.png", white_canny_image)
 
     skeleton_image = skeletonize(canny_image, 15)
+    white_skeleton_image = 255 - skeleton_image
     imwrite(f"{name}/skeleton.png", skeleton_image)
+    imwrite(f"{name}/white_skeleton.png", white_skeleton_image)
 
     separated_clusters = dbscan_separation(skeleton_image)
     curves, baselines = line_separation(separated_clusters)
@@ -495,9 +390,13 @@ def main():
     imwrite(f"{name}/30min.png", _30min)
 
     dbscan1 = overlay_lines(skeleton_image, curves)
+    white_dbscan1 = overlay_lines(white_skeleton_image, curves)
     dbscan2 = overlay_lines(canny_image, curves)
+    white_dbscan2 = overlay_lines(white_canny_image, curves)
     imwrite(f"{name}/dbscan1.png", dbscan1)
+    imwrite(f"{name}/white_dbscan1.png", white_dbscan1)
     imwrite(f"{name}/dbscan2.png", dbscan2)
+    imwrite(f"{name}/white_dbscan2.png", white_dbscan2)
     print("\n----------------------\n")
 
   print("Processo Terminado!")
